@@ -1,4 +1,4 @@
-﻿"""Document business routes with lifecycle, permissions, and audit logging."""
+"""Document business routes with lifecycle, permissions, and audit logging."""
 
 from datetime import UTC, datetime
 
@@ -212,11 +212,21 @@ def approve_version(
     """Approve version in review and obsolete the currently active one."""
     _require_roles(current_user, UserRole.COORDENADOR)
 
-    version = db.query(DocumentVersion).filter(DocumentVersion.id == version_id).first()
+    version = (
+        db.query(DocumentVersion)
+        .filter(DocumentVersion.id == version_id)
+        .with_for_update()
+        .first()
+    )
     if not version:
         raise HTTPException(status_code=404, detail="Versao nao encontrada.")
 
-    document = db.query(Document).filter(Document.id == version.document_id).first()
+    document = (
+        db.query(Document)
+        .filter(Document.id == version.document_id)
+        .with_for_update()
+        .first()
+    )
     if not document:
         raise HTTPException(status_code=404, detail="Documento nao encontrado.")
 
@@ -231,6 +241,11 @@ def approve_version(
 
     previous = version.status
 
+    # Serialize concurrent approvals for the same document.
+    db.query(DocumentVersion.id).filter(
+        DocumentVersion.document_id == version.document_id
+    ).with_for_update().all()
+
     current_active = (
         db.query(DocumentVersion)
         .filter(
@@ -238,6 +253,7 @@ def approve_version(
             DocumentVersion.status == DocumentStatus.ACTIVE,
             DocumentVersion.id != version.id,
         )
+        .with_for_update()
         .first()
     )
 
@@ -281,7 +297,6 @@ def approve_version(
 
     db.refresh(version)
     return version
-
 
 @router.post("/{version_id}/reject", response_model=DocumentVersionResponse)
 def reject_version(
@@ -426,5 +441,6 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
+
 
 

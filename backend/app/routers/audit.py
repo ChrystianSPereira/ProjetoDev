@@ -20,6 +20,7 @@ router = APIRouter(prefix="/audit", tags=["audit"], responses=DEFAULT_ERROR_RESP
 
 
 def _require_coordinator(user: User) -> None:
+    """Enforce coordinator profile for access to compliance logs."""
     if user.role != UserRole.COORDENADOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -40,7 +41,7 @@ def list_audit_logs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AuditLogListResponse:
-    """List immutable audit events with sector/corporate visibility guards."""
+    """List immutable audit events with sector and corporate visibility rules."""
     _require_coordinator(current_user)
 
     if start_at and end_at and end_at < start_at:
@@ -118,4 +119,3 @@ def list_audit_logs(
     ]
 
     return AuditLogListResponse(items=items, total=total, skip=skip, limit=limit)
-

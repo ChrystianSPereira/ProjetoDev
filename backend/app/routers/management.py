@@ -1,4 +1,4 @@
-﻿"""Support endpoints for sectors, document types, and users."""
+"""Support endpoints for sectors, document types, and users."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
@@ -26,6 +26,7 @@ router = APIRouter(tags=["management"], responses=DEFAULT_ERROR_RESPONSES)
 
 
 def _require_coordinator(user: User) -> None:
+    """Enforce coordinator profile for administrative operations."""
     if user.role != UserRole.COORDENADOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -38,6 +39,7 @@ def list_sectors(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> list[Sector]:
+    """Return all registered sectors ordered by name."""
     return db.query(Sector).order_by(Sector.name.asc()).all()
 
 
@@ -47,6 +49,7 @@ def create_sector(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Sector:
+    """Create a new sector (coordinator-only)."""
     _require_coordinator(current_user)
 
     sector = Sector(name=payload.name.strip())
@@ -67,6 +70,7 @@ def list_document_types(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> list[DocumentType]:
+    """Return all document taxonomy types ordered by name."""
     return db.query(DocumentType).order_by(DocumentType.name.asc()).all()
 
 
@@ -80,6 +84,7 @@ def create_document_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DocumentType:
+    """Create a new document type (coordinator-only)."""
     _require_coordinator(current_user)
 
     doc_type = DocumentType(name=payload.name.strip())
@@ -104,6 +109,7 @@ def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> UserListResponse:
+    """List users from coordinator sector with optional search and role filter."""
     _require_coordinator(current_user)
 
     query = db.query(User).filter(User.sector_id == current_user.sector_id)
@@ -127,6 +133,7 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> User:
+    """Create a user restricted to coordinator scope and sector boundaries."""
     _require_coordinator(current_user)
 
     if payload.role == UserRole.COORDENADOR and current_user.role != UserRole.COORDENADOR:
@@ -160,4 +167,3 @@ def create_user(
 
     db.refresh(user)
     return user
-

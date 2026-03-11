@@ -30,6 +30,7 @@ def _error_payload(
     path: str,
     details: list[dict] | dict | None = None,
 ) -> dict:
+    """Build standardized error payload consumed by all exception handlers."""
     return ErrorResponse(
         status_code=status_code,
         error=error,
@@ -42,6 +43,7 @@ def _error_payload(
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    """Normalize explicit HTTP exceptions into the API error contract."""
     payload = _error_payload(
         status_code=exc.status_code,
         error="HTTP_ERROR",
@@ -57,6 +59,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Normalize request validation failures with field-level details."""
     payload = _error_payload(
         status_code=422,
         error="VALIDATION_ERROR",
@@ -69,6 +72,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, _: Exception):
+    """Return safe generic error payload for unexpected server exceptions."""
     payload = _error_payload(
         status_code=500,
         error="INTERNAL_SERVER_ERROR",
@@ -80,10 +84,13 @@ async def unhandled_exception_handler(request: Request, _: Exception):
 
 @app.get("/", response_model=ApiStatusResponse, responses=DEFAULT_ERROR_RESPONSES)
 def root() -> ApiStatusResponse:
+    """Simple root endpoint to confirm API process is running."""
     return ApiStatusResponse(status="API funcionando")
 
 
-@app.get("/health/db", response_model=ApiStatusResponse, responses=DEFAULT_ERROR_RESPONSES)
+@app.get(
+    "/health/db", response_model=ApiStatusResponse, responses=DEFAULT_ERROR_RESPONSES
+)
 def health_db() -> ApiStatusResponse:
     """Validate DB reachability to simplify diagnostics in local/dev/prod."""
     with engine.connect() as connection:

@@ -1,5 +1,5 @@
-﻿param(
-    [ValidateSet("up", "down", "logs", "restart", "reset", "status")]
+param(
+    [ValidateSet("up", "down", "logs", "restart", "reset", "status", "pytest")]
     [string]$Action
 )
 
@@ -15,12 +15,13 @@ function Show-Menu {
     Write-Host "4) restart - Reinicia os containers"
     Write-Host "5) reset   - Remove volumes e recria tudo (apaga dados)"
     Write-Host "6) status  - Mostra status dos servicos"
+    Write-Host "7) pytest  - Roda testes automatizados do backend"
     Write-Host ""
 }
 
 if (-not $Action) {
     Show-Menu
-    $choice = Read-Host "Escolha uma opcao (1-6)"
+    $choice = Read-Host "Escolha uma opcao (1-7)"
 
     $Action = switch ($choice) {
         "1" { "up" }
@@ -29,6 +30,7 @@ if (-not $Action) {
         "4" { "restart" }
         "5" { "reset" }
         "6" { "status" }
+        "7" { "pytest" }
         default {
             throw "Opcao invalida: $choice"
         }
@@ -67,6 +69,10 @@ try {
         }
         "status" {
             docker compose ps
+            break
+        }
+        "pytest" {
+            python -m pytest backend/tests -q
             break
         }
     }
