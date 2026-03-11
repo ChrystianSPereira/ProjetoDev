@@ -1,4 +1,4 @@
-from sqlalchemy import (
+﻿from sqlalchemy import (
     CheckConstraint,
     Column,
     Date,
@@ -31,6 +31,7 @@ class DocumentVersion(Base):
             "document_id",
             unique=True,
             postgresql_where=text("status = 'ACTIVE'"),
+            sqlite_where=text("status = 'ACTIVE'"),
         ),
     )
 

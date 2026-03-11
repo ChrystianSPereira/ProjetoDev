@@ -1,4 +1,4 @@
-"""Authentication routes (login and current user profile)."""
+﻿"""Authentication routes (login and current user profile)."""
 
 from datetime import timedelta
 
@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from ..core.api_responses import DEFAULT_ERROR_RESPONSES
 from ..core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from ..core.security import create_access_token, verify_password
 from ..database import get_db
@@ -13,7 +14,7 @@ from ..dependencies.auth import get_current_user
 from ..models.user import User
 from ..schemas.auth import AuthenticatedUserResponse, TokenResponse
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"], responses=DEFAULT_ERROR_RESPONSES)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -44,3 +45,4 @@ def login(
 def read_me(current_user: User = Depends(get_current_user)) -> User:
     """Return authenticated user profile from bearer token."""
     return current_user
+
