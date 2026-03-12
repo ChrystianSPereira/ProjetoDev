@@ -1,6 +1,6 @@
-"""Support endpoints for sectors, document types, and users."""
+﻿"""Support endpoints for sectors, document types, and users."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,7 @@ from ..schemas.management import (
     UserCreateRequest,
     UserListResponse,
     UserResponse,
+    UserUpdateRequest,
 )
 
 router = APIRouter(tags=["management"], responses=DEFAULT_ERROR_RESPONSES)
@@ -32,6 +33,19 @@ def _require_coordinator(user: User) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Somente coordenador pode realizar esta acao.",
         )
+
+
+def _get_user_from_sector(db: Session, user_id: int, sector_id: int) -> User:
+    """Load user constrained by sector boundary."""
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .filter(User.sector_id == sector_id)
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
+    return user
 
 
 @router.get("/sectors", response_model=list[SectorResponse])
@@ -136,9 +150,6 @@ def create_user(
     """Create a user restricted to coordinator scope and sector boundaries."""
     _require_coordinator(current_user)
 
-    if payload.role == UserRole.COORDENADOR and current_user.role != UserRole.COORDENADOR:
-        raise HTTPException(status_code=403, detail="Sem permissao para criar coordenador.")
-
     target_sector_id = payload.sector_id or current_user.sector_id
     if target_sector_id != current_user.sector_id:
         raise HTTPException(
@@ -167,3 +178,61 @@ def create_user(
 
     db.refresh(user)
     return user
+
+
+@router.put("/users/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    payload: UserUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Update user data within coordinator sector scope."""
+    _require_coordinator(current_user)
+
+    target_user = _get_user_from_sector(db, user_id=user_id, sector_id=current_user.sector_id)
+
+    if payload.name is not None:
+        value = payload.name.strip()
+        if not value:
+            raise HTTPException(status_code=422, detail="Nome invalido.")
+        target_user.name = value
+
+    if payload.email is not None:
+        value = payload.email.strip().lower()
+        if not value:
+            raise HTTPException(status_code=422, detail="Email invalido.")
+        target_user.email = value
+
+    if payload.role is not None:
+        target_user.role = payload.role
+
+    if payload.password is not None:
+        target_user.password_hash = get_password_hash(payload.password)
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Email ja cadastrado.") from exc
+
+    db.refresh(target_user)
+    return target_user
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    """Delete user from coordinator sector, except self account."""
+    _require_coordinator(current_user)
+
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="Nao e permitido excluir o proprio usuario.")
+
+    target_user = _get_user_from_sector(db, user_id=user_id, sector_id=current_user.sector_id)
+    db.delete(target_user)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

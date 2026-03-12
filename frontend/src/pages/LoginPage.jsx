@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { saveAccessToken, getAccessToken } from '../features/auth/authStorage'
+import { saveAccessToken, getAccessToken, saveUserProfile } from '../features/auth/authStorage'
 import { loginRequest, meRequest } from '../lib/api'
 import { LoginCard } from '../components/auth/LoginCard'
 
@@ -66,7 +66,8 @@ export function LoginPage() {
       const tokenPayload = await loginRequest({ username, password })
       saveAccessToken(tokenPayload.access_token, remember)
 
-      await meRequest(tokenPayload.access_token)
+      const profile = await meRequest(tokenPayload.access_token)
+      saveUserProfile(profile, remember)
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao autenticar.')
@@ -150,4 +151,5 @@ export function LoginPage() {
     </div>
   )
 }
+
 

@@ -35,6 +35,13 @@ class UserCreateRequest(BaseModel):
     sector_id: int | None = None
 
 
+class UserUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    email: str | None = Field(default=None, min_length=5, max_length=255)
+    password: str | None = Field(default=None, min_length=6, max_length=128)
+    role: UserRole | None = None
+
+
 class UserResponse(BaseModel):
     id: int
     name: str
