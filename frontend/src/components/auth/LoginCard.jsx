@@ -22,6 +22,7 @@ function InputField({
           value={value}
           onChange={onChange}
           className="h-12 w-full rounded-xl border bg-(--field-bg) border-(--field-border) px-4 pr-14 text-sm text-(--field-text) shadow-[0_0_0_0_rgba(0,0,0,0)] transition-all outline-none placeholder:text-(--field-placeholder) focus:border-(--field-focus) focus:ring-4 focus:ring-(--field-ring)"
+          required
         />
 
         <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
@@ -34,11 +35,16 @@ function InputField({
   )
 }
 
-export function LoginCard() {
+export function LoginCard({ onSubmit, loading = false, error = '' }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    await onSubmit({ username, password, remember })
+  }
 
   return (
     <div className="w-full max-w-md rounded-3xl border bg-(--card-bg) border-(--card-border) p-7 shadow-[0_30px_70px_-45px_var(--card-shadow)] backdrop-blur">
@@ -54,7 +60,7 @@ export function LoginCard() {
         Faca login para acessar documentos vigentes, fluxo de aprovacao e trilha de auditoria.
       </p>
 
-      <form className="mt-7 space-y-4" onSubmit={(event) => event.preventDefault()}>
+      <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         <InputField
           id="username"
           label="Usuario"
@@ -81,6 +87,7 @@ export function LoginCard() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="h-12 w-full rounded-xl border bg-(--field-bg) border-(--field-border) px-4 pr-14 text-sm text-(--field-text) shadow-[0_0_0_0_rgba(0,0,0,0)] transition-all outline-none placeholder:text-(--field-placeholder) focus:border-(--field-focus) focus:ring-4 focus:ring-(--field-ring)"
+              required
             />
 
             <div className="absolute inset-y-0 right-2 flex items-center">
@@ -115,11 +122,18 @@ export function LoginCard() {
           Manter sessao neste dispositivo
         </label>
 
+        {error ? (
+          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </p>
+        ) : null}
+
         <button
           type="submit"
-          className="mt-2 h-12 w-full rounded-xl bg-linear-to-r from-(--button-1) to-(--button-2) text-sm font-bold text-white transition-all hover:from-(--button-1-hover) hover:to-(--button-2-hover)"
+          disabled={loading}
+          className="mt-2 h-12 w-full rounded-xl bg-linear-to-r from-(--button-1) to-(--button-2) text-sm font-bold text-white transition-all hover:from-(--button-1-hover) hover:to-(--button-2-hover) disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Entrar na plataforma
+          {loading ? 'Entrando...' : 'Entrar na plataforma'}
         </button>
       </form>
 

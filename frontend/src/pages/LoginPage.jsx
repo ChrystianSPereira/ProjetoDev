@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
+import { saveAccessToken, getAccessToken } from '../features/auth/authStorage'
+import { loginRequest, meRequest } from '../lib/api'
 import { LoginCard } from '../components/auth/LoginCard'
 
 const HIGHLIGHTS = [
@@ -39,11 +42,38 @@ function getInitialTheme() {
 }
 
 export function LoginPage() {
+  const navigate = useNavigate()
   const [theme, setTheme] = useState(getInitialTheme)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (token) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [navigate])
+
+  async function handleLogin({ username, password, remember }) {
+    try {
+      setLoading(true)
+      setError('')
+
+      const tokenPayload = await loginRequest({ username, password })
+      saveAccessToken(tokenPayload.access_token, remember)
+
+      await meRequest(tokenPayload.access_token)
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao autenticar.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className={`theme-${theme} min-h-screen bg-[linear-gradient(120deg,var(--page-bg-from)_40%,var(--page-bg-to)_100%)] text-(--page-text)`}>
@@ -114,9 +144,10 @@ export function LoginPage() {
             })}
           </div>
 
-          <LoginCard />
+          <LoginCard onSubmit={handleLogin} loading={loading} error={error} />
         </main>
       </div>
     </div>
   )
 }
+
