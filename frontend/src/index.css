@@ -1,1 +1,103 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.theme-default {
+  --page-bg-from: #f5f7fa;
+  --page-bg-to: #eef2f7;
+  --page-text: #0f172a;
+
+  --panel-1: #334155;
+  --panel-2: #1e293b;
+  --panel-3: #0f172a;
+  --panel-dot: #cbd5e1;
+  --panel-muted: #cbd5e1;
+  --panel-subtext: #e2e8f0;
+  --panel-card-bg: rgba(15, 23, 42, 0.25);
+  --panel-card-border: rgba(148, 163, 184, 0.2);
+
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-border: rgba(255, 255, 255, 0.9);
+  --card-shadow: rgba(15, 23, 42, 0.65);
+  --card-title: #0f172a;
+  --card-text: #64748b;
+
+  --chip-bg: #f0f9ff;
+  --chip-border: #bae6fd;
+  --chip-text: #075985;
+  --chip-dot: #0369a1;
+
+  --field-bg: #ffffff;
+  --field-border: #cbd5e1;
+  --field-text: #0f172a;
+  --field-placeholder: #94a3b8;
+  --field-icon: #94a3b8;
+  --field-focus: #0369a1;
+  --field-ring: #e0f2fe;
+
+  --link: #0369a1;
+  --link-hover: #075985;
+
+  --button-1: #075985;
+  --button-2: #1e293b;
+  --button-1-hover: #0c4a6e;
+  --button-2-hover: #0f172a;
+}
+
+.theme-corporate-dark {
+  --page-bg-from: #eceff4;
+  --page-bg-to: #dde3ea;
+  --page-text: #0f172a;
+
+  --panel-1: #1f2937;
+  --panel-2: #111827;
+  --panel-3: #030712;
+  --panel-dot: #94a3b8;
+  --panel-muted: #94a3b8;
+  --panel-subtext: #cbd5e1;
+  --panel-card-bg: rgba(2, 6, 23, 0.4);
+  --panel-card-border: rgba(100, 116, 139, 0.35);
+
+  --card-bg: rgba(248, 250, 252, 0.97);
+  --card-border: rgba(255, 255, 255, 0.98);
+  --card-shadow: rgba(2, 6, 23, 0.55);
+  --card-title: #0b1220;
+  --card-text: #475569;
+
+  --chip-bg: #e2e8f0;
+  --chip-border: #cbd5e1;
+  --chip-text: #334155;
+  --chip-dot: #334155;
+
+  --field-bg: #ffffff;
+  --field-border: #cbd5e1;
+  --field-text: #0f172a;
+  --field-placeholder: #94a3b8;
+  --field-icon: #94a3b8;
+  --field-focus: #334155;
+  --field-ring: #e2e8f0;
+
+  --link: #334155;
+  --link-hover: #1e293b;
+
+  --button-1: #1e293b;
+  --button-2: #0f172a;
+  --button-1-hover: #111827;
+  --button-2-hover: #030712;
+}
