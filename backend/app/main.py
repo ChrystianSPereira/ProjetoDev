@@ -1,5 +1,6 @@
-"""FastAPI entrypoint for the document management backend."""
+﻿"""FastAPI entrypoint for the document management backend."""
 
+import logging
 from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException, Request
@@ -14,6 +15,8 @@ from .routers.auth import router as auth_router
 from .routers.documents import router as documents_router
 from .routers.management import router as management_router
 from .schemas.common import ApiStatusResponse, ErrorResponse
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Sistema de Gestao Documental",
@@ -71,8 +74,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, _: Exception):
+async def unhandled_exception_handler(request: Request, exc: Exception):
     """Return safe generic error payload for unexpected server exceptions."""
+    logger.exception("Unhandled exception on %s", request.url.path, exc_info=exc)
     payload = _error_payload(
         status_code=500,
         error="INTERNAL_SERVER_ERROR",

@@ -1,4 +1,4 @@
-"""Audit trail routes for compliance and traceability."""
+﻿"""Audit trail routes for compliance and traceability."""
 
 from datetime import datetime
 
@@ -19,12 +19,12 @@ from ..schemas.audit import AuditLogItemResponse, AuditLogListResponse
 router = APIRouter(prefix="/audit", tags=["audit"], responses=DEFAULT_ERROR_RESPONSES)
 
 
-def _require_coordinator(user: User) -> None:
-    """Enforce coordinator profile for access to compliance logs."""
-    if user.role != UserRole.COORDENADOR:
+def _require_governance_profile(user: User) -> None:
+    """Allow compliance access for coordinator/admin governance profiles."""
+    if user.role not in (UserRole.COORDENADOR, UserRole.ADMINISTRADOR):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Somente coordenador pode consultar auditoria.",
+            detail="Somente coordenador/admin pode consultar auditoria.",
         )
 
 
@@ -42,7 +42,7 @@ def list_audit_logs(
     current_user: User = Depends(get_current_user),
 ) -> AuditLogListResponse:
     """List immutable audit events with sector and corporate visibility rules."""
-    _require_coordinator(current_user)
+    _require_governance_profile(current_user)
 
     if start_at and end_at and end_at < start_at:
         raise HTTPException(
@@ -61,13 +61,15 @@ def list_audit_logs(
         )
         .join(Document, Document.id == DocumentVersion.document_id)
         .join(User, User.id == AuditLog.actor_user_id)
-        .filter(
+    )
+
+    if current_user.role != UserRole.ADMINISTRADOR:
+        query = query.filter(
             or_(
                 Document.scope == DocumentScope.CORPORATE,
                 Document.sector_id == current_user.sector_id,
             )
         )
-    )
 
     if document_id is not None:
         query = query.filter(Document.id == document_id)

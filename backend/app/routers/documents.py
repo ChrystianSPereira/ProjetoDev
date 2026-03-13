@@ -1,4 +1,4 @@
-"""Document business routes with lifecycle, permissions, and audit logging."""
+﻿"""Document business routes with lifecycle, permissions, and audit logging."""
 
 from datetime import UTC, datetime
 
@@ -441,6 +441,7 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
+
 
 
 

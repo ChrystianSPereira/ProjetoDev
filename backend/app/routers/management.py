@@ -26,12 +26,25 @@ from ..schemas.management import (
 router = APIRouter(tags=["management"], responses=DEFAULT_ERROR_RESPONSES)
 
 
-def _require_coordinator(user: User) -> None:
-    """Enforce coordinator profile for administrative operations."""
-    if user.role != UserRole.COORDENADOR:
+def _is_admin(user: User) -> bool:
+    return user.role == UserRole.ADMINISTRADOR
+
+
+def _require_management_access(user: User) -> None:
+    """Allow management actions for coordinator or administrator."""
+    if user.role not in (UserRole.COORDENADOR, UserRole.ADMINISTRADOR):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Somente coordenador pode realizar esta acao.",
+            detail="Somente coordenador/admin pode realizar esta acao.",
+        )
+
+
+def _require_can_assign_admin(current_user: User, target_role: UserRole | None) -> None:
+    """Only administrators can create/promote users to administrator role."""
+    if target_role == UserRole.ADMINISTRADOR and not _is_admin(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Somente administrador pode atribuir perfil ADMINISTRADOR.",
         )
 
 
@@ -43,6 +56,14 @@ def _get_user_from_sector(db: Session, user_id: int, sector_id: int) -> User:
         .filter(User.sector_id == sector_id)
         .first()
     )
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
+    return user
+
+
+def _get_user_by_id(db: Session, user_id: int) -> User:
+    """Load user by id for administrator-scoped operations."""
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
     return user
@@ -63,8 +84,8 @@ def create_sector(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Sector:
-    """Create a new sector (coordinator-only)."""
-    _require_coordinator(current_user)
+    """Create a new sector (coordinator/admin)."""
+    _require_management_access(current_user)
 
     sector = Sector(name=payload.name.strip())
     db.add(sector)
@@ -98,8 +119,8 @@ def create_document_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DocumentType:
-    """Create a new document type (coordinator-only)."""
-    _require_coordinator(current_user)
+    """Create a new document type (coordinator/admin)."""
+    _require_management_access(current_user)
 
     doc_type = DocumentType(name=payload.name.strip())
     db.add(doc_type)
@@ -118,15 +139,22 @@ def create_document_type(
 def list_users(
     q: str | None = Query(default=None, min_length=1),
     role: UserRole | None = Query(default=None),
+    sector_id: int | None = Query(default=None, ge=1),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> UserListResponse:
-    """List users from coordinator sector with optional search and role filter."""
-    _require_coordinator(current_user)
+    """List users respecting coordinator sector boundaries and admin global scope."""
+    _require_management_access(current_user)
 
-    query = db.query(User).filter(User.sector_id == current_user.sector_id)
+    query = db.query(User)
+
+    if _is_admin(current_user):
+        if sector_id is not None:
+            query = query.filter(User.sector_id == sector_id)
+    else:
+        query = query.filter(User.sector_id == current_user.sector_id)
 
     if q:
         pattern = f"%{q}%"
@@ -147,11 +175,13 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Create a user restricted to coordinator scope and sector boundaries."""
-    _require_coordinator(current_user)
+    """Create user with sector and role segregation rules."""
+    _require_management_access(current_user)
+    _require_can_assign_admin(current_user, payload.role)
 
     target_sector_id = payload.sector_id or current_user.sector_id
-    if target_sector_id != current_user.sector_id:
+
+    if not _is_admin(current_user) and target_sector_id != current_user.sector_id:
         raise HTTPException(
             status_code=403,
             detail="Coordenador so pode criar usuarios no proprio setor.",
@@ -187,10 +217,22 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Update user data within coordinator sector scope."""
-    _require_coordinator(current_user)
+    """Update user data with profile and multi-sector constraints."""
+    _require_management_access(current_user)
+    _require_can_assign_admin(current_user, payload.role)
 
-    target_user = _get_user_from_sector(db, user_id=user_id, sector_id=current_user.sector_id)
+    if _is_admin(current_user):
+        target_user = _get_user_by_id(db, user_id=user_id)
+    else:
+        target_user = _get_user_from_sector(
+            db, user_id=user_id, sector_id=current_user.sector_id
+        )
+
+        if target_user.role == UserRole.ADMINISTRADOR:
+            raise HTTPException(
+                status_code=403,
+                detail="Coordenador nao pode alterar administrador.",
+            )
 
     if payload.name is not None:
         value = payload.name.strip()
@@ -226,13 +268,27 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    """Delete user from coordinator sector, except self account."""
-    _require_coordinator(current_user)
+    """Delete user with sector/admin safeguards."""
+    _require_management_access(current_user)
 
     if current_user.id == user_id:
-        raise HTTPException(status_code=400, detail="Nao e permitido excluir o proprio usuario.")
+        raise HTTPException(
+            status_code=400, detail="Nao e permitido excluir o proprio usuario."
+        )
 
-    target_user = _get_user_from_sector(db, user_id=user_id, sector_id=current_user.sector_id)
+    if _is_admin(current_user):
+        target_user = _get_user_by_id(db, user_id=user_id)
+    else:
+        target_user = _get_user_from_sector(
+            db, user_id=user_id, sector_id=current_user.sector_id
+        )
+
+        if target_user.role == UserRole.ADMINISTRADOR:
+            raise HTTPException(
+                status_code=403,
+                detail="Coordenador nao pode excluir administrador.",
+            )
+
     db.delete(target_user)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

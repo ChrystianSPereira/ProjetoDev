@@ -10,7 +10,7 @@ import {
   updateUserRequest,
 } from '../lib/api'
 
-const ROLES = ['AUTOR', 'COORDENADOR', 'LEITOR']
+const BASE_ROLES = ['AUTOR', 'COORDENADOR', 'LEITOR']
 const PAGE_SIZE = 10
 
 function Modal({ isOpen, title, onClose, children }) {
@@ -44,6 +44,12 @@ const EMPTY_FORM = {
 }
 
 function roleBadgeClass(role, isDark) {
+  if (role === 'ADMINISTRADOR') {
+    return isDark
+      ? 'border-fuchsia-500/40 bg-fuchsia-500/15 text-fuchsia-300'
+      : 'border-fuchsia-400/50 bg-fuchsia-100 text-fuchsia-700'
+  }
+
   if (role === 'COORDENADOR') {
     return isDark
       ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
@@ -270,7 +276,7 @@ export function UsersPage() {
 
   return (
     <AppShell title="Gestao de Usuarios" subtitle="Administracao de acessos e perfis da plataforma.">
-      {({ palette, isAdmin, isDark }) => {
+      {({ palette, isAdmin, isDark, currentUser }) => {
         const inputClass = isDark
           ? 'h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
           : 'h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none'
@@ -280,6 +286,10 @@ export function UsersPage() {
         const secondaryButtonClass = isDark
           ? 'h-9 rounded-xl border border-slate-700 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-800'
           : 'h-9 rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+        const availableRoles =
+          currentUser?.role === 'ADMINISTRADOR'
+            ? [...BASE_ROLES, 'ADMINISTRADOR']
+            : BASE_ROLES
 
         return (
           <>
@@ -305,7 +315,7 @@ export function UsersPage() {
                       style={{ colorScheme: isDark ? 'dark' : 'light' }}
                     >
                       <option value="">Todos os perfis</option>
-                      {ROLES.map((option) => (
+                      {availableRoles.map((option) => (
                         <option key={option} value={option}>
                           {option}
                         </option>
@@ -455,7 +465,7 @@ export function UsersPage() {
                   className={selectClass}
                   style={{ colorScheme: isDark ? 'dark' : 'light' }}
                 >
-                  {ROLES.map((option) => (
+                  {availableRoles.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -503,7 +513,7 @@ export function UsersPage() {
                   className={selectClass}
                   style={{ colorScheme: isDark ? 'dark' : 'light' }}
                 >
-                  {ROLES.map((option) => (
+                  {availableRoles.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -550,3 +560,6 @@ export function UsersPage() {
     </AppShell>
   )
 }
+
+
+

@@ -1,4 +1,4 @@
-from enum import Enum
+﻿from enum import Enum
 
 
 class UserRole(str, Enum):
@@ -6,6 +6,7 @@ class UserRole(str, Enum):
 
     AUTOR = "AUTOR"
     COORDENADOR = "COORDENADOR"
+    ADMINISTRADOR = "ADMINISTRADOR"
     LEITOR = "LEITOR"
 
 

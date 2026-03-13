@@ -20,14 +20,12 @@ const OPERATION_MENU = [
     label: 'Aprovacoes',
     children: ['Pendentes do setor', 'Historico de decisoes'],
   },
-  {
-    key: 'auditoria',
-    label: 'Auditoria e Compliance',
-    path: '/auditoria',
-  },
-]
+ ]
 
-const ADMIN_MENU = [{ key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' }]
+const ADMIN_MENU = [
+  { key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' },
+  { key: 'auditoria', label: 'Auditoria e Compliance', path: '/auditoria' },
+]
 
 function getInitialTheme() {
   if (typeof window === 'undefined') {
@@ -100,7 +98,7 @@ export function AppShell({ title, subtitle, children }) {
 
   useEffect(() => {
     const token = getAccessToken()
-    if (!token || currentUser) {
+    if (!token) {
       return
     }
 
@@ -109,6 +107,7 @@ export function AppShell({ title, subtitle, children }) {
       .then((profile) => {
         if (!isMounted) return
         setCurrentUser(profile)
+        // Keep profile cache aligned with backend role/permissions changes.
         saveUserProfile(profile, true)
       })
       .catch(() => {
@@ -120,7 +119,7 @@ export function AppShell({ title, subtitle, children }) {
     return () => {
       isMounted = false
     }
-  }, [currentUser, navigate])
+  }, [navigate])
 
   const palette = useMemo(
     () =>
@@ -334,4 +333,6 @@ export function AppShell({ title, subtitle, children }) {
     </div>
   )
 }
+
+
 

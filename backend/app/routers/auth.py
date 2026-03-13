@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from ..core.api_responses import DEFAULT_ERROR_RESPONSES
@@ -22,8 +23,22 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ) -> TokenResponse:
-    """Authenticate user and return a JWT access token."""
-    user = db.query(User).filter(User.email == form_data.username).first()
+    """Authenticate by corporate email, user name, or email prefix and return JWT."""
+    login_input = form_data.username.strip().lower()
+
+    user = (
+        db.query(User)
+        .filter(
+            or_(
+                func.lower(User.email) == login_input,
+                func.lower(User.name) == login_input,
+                func.lower(func.split_part(User.email, "@", 1)) == login_input,
+            )
+        )
+        .order_by(User.id.asc())
+        .first()
+    )
+
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,4 +60,3 @@ def login(
 def read_me(current_user: User = Depends(get_current_user)) -> User:
     """Return authenticated user profile from bearer token."""
     return current_user
-
