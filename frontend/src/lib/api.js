@@ -1,4 +1,4 @@
-﻿const API_BASE = '/api'
+const API_BASE = '/api'
 
 function formBody(values) {
   return new URLSearchParams(values).toString()
@@ -57,6 +57,22 @@ export async function listSectorsRequest(token) {
 
   if (!response.ok) {
     throw new Error(buildMessage(data, 'Falha ao carregar setores.'))
+  }
+
+  return data
+}
+
+export async function listDocumentTypesRequest(token) {
+  const response = await fetch(`${API_BASE}/document-types`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar tipos documentais.'))
   }
 
   return data
@@ -179,3 +195,217 @@ export async function deleteUserRequest(token, userId) {
     throw new Error(buildMessage(data, 'Falha ao excluir usuario.'))
   }
 }
+
+export async function createDraftRequest(token, payload) {
+  const response = await fetch(`${API_BASE}/documents/drafts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao criar rascunho.'))
+  }
+
+  return data
+}
+
+export async function listMyDraftsRequest(token, { skip = 0, limit = 20 } = {}) {
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+
+  const response = await fetch(`${API_BASE}/documents/my-drafts?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar rascunhos.'))
+  }
+
+  return data
+}
+
+export async function listReviewQueueRequest(token, { skip = 0, limit = 20 } = {}) {
+  const params = new URLSearchParams()
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+
+  const response = await fetch(`${API_BASE}/documents/review-queue?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar fila de aprovacao.'))
+  }
+
+  return data
+}
+
+export async function submitDraftRequest(token, versionId) {
+  const response = await fetch(`${API_BASE}/documents/${versionId}/submit`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao submeter rascunho.'))
+  }
+
+  return data
+}
+
+export async function approveVersionRequest(token, versionId) {
+  const response = await fetch(`${API_BASE}/documents/${versionId}/approve`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao aprovar versao.'))
+  }
+
+  return data
+}
+
+export async function rejectVersionRequest(token, versionId, reason) {
+  const response = await fetch(`${API_BASE}/documents/${versionId}/reject`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ reason }),
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao reprovar versao.'))
+  }
+
+  return data
+}
+
+export async function searchActiveDocumentsRequest(
+  token,
+  { q = '', sectorId = '', documentTypeId = '', skip = 0, limit = 20 } = {},
+) {
+  const params = new URLSearchParams()
+  if (q.trim()) {
+    params.set('q', q.trim())
+  }
+  if (sectorId) {
+    params.set('sector_id', String(sectorId))
+  }
+  if (documentTypeId) {
+    params.set('document_type_id', String(documentTypeId))
+  }
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+
+  const response = await fetch(`${API_BASE}/documents/search?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao buscar documentos vigentes.'))
+  }
+
+  return data
+}
+
+export async function listDocumentsRequest(
+  token,
+  { q = '', sectorId = '', documentTypeId = '', scope = '', status = '', skip = 0, limit = 20 } = {},
+) {
+  const params = new URLSearchParams()
+  if (q.trim()) {
+    params.set('q', q.trim())
+  }
+  if (sectorId) {
+    params.set('sector_id', String(sectorId))
+  }
+  if (documentTypeId) {
+    params.set('document_type_id', String(documentTypeId))
+  }
+  if (scope) {
+    params.set('scope', scope)
+  }
+  if (status) {
+    params.set('status', status)
+  }
+  params.set('skip', String(skip))
+  params.set('limit', String(limit))
+
+  const response = await fetch(`${API_BASE}/documents?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar listagem de documentos.'))
+  }
+
+  return data
+}
+
+export async function getDocumentDetailRequest(token, documentId) {
+  const response = await fetch(`${API_BASE}/documents/${documentId}/detail`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar detalhe do documento.'))
+  }
+
+  return data
+}
+export async function listDocumentVersionsRequest(token, documentId) {
+  const response = await fetch(`${API_BASE}/documents/${documentId}/versions`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao carregar versoes do documento.'))
+  }
+
+  return data
+}
+

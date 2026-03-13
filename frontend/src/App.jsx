@@ -1,8 +1,11 @@
-﻿import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AuditPage } from './pages/AuditPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { DocumentCreatePage } from './pages/DocumentCreatePage'
+import { DocumentDetailPage } from './pages/DocumentDetailPage'
+import { DocumentsListPage } from './pages/DocumentsListPage'
 import { LoginPage } from './pages/LoginPage'
 import { UsersPage } from './pages/UsersPage'
 
@@ -13,6 +16,9 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/documentos" element={<DocumentsListPage />} />
+        <Route path="/documentos/novo" element={<DocumentCreatePage />} />
+        <Route path="/documentos/:documentId" element={<DocumentDetailPage />} />
         <Route path="/auditoria" element={<AuditPage />} />
         <Route path="/usuarios" element={<UsersPage />} />
       </Route>

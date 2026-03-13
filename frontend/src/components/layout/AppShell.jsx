@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { clearAccessToken, getAccessToken, getUserProfile, saveUserProfile } from '../../features/auth/authStorage'
@@ -12,15 +12,11 @@ const OPERATION_MENU = [
   { key: 'dashboard', label: 'Visao Geral', path: '/dashboard' },
   {
     key: 'documentos',
-    label: 'Documentos',
-    children: ['Buscar vigentes', 'Criar rascunho', 'Minhas revisoes'],
+    label: 'Centro de Documentos',
+    path: '/documentos',
+    children: ['Listagem principal', 'Criacao de rascunho', 'Detalhe e auditoria'],
   },
-  {
-    key: 'aprovacoes',
-    label: 'Aprovacoes',
-    children: ['Pendentes do setor', 'Historico de decisoes'],
-  },
- ]
+]
 
 const ADMIN_MENU = [
   { key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' },
@@ -72,7 +68,7 @@ function HamburgerIcon() {
 
 function Chevron({ open, hidden }) {
   if (hidden) return null
-  return <span className="text-slate-500">{open ? '⌄' : '›'}</span>
+  return <span className="text-slate-500">{open ? 'v' : '>'}</span>
 }
 
 export function AppShell({ title, subtitle, children }) {
@@ -82,7 +78,7 @@ export function AppShell({ title, subtitle, children }) {
   const [theme, setTheme] = useState(getInitialTheme)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarCollapsed)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [openMenus, setOpenMenus] = useState(() => new Set(['documentos', 'aprovacoes']))
+  const [openMenus, setOpenMenus] = useState(() => new Set(['documentos']))
   const [currentUser, setCurrentUser] = useState(() => getUserProfile())
 
   const isDark = theme === 'corporate-dark'
@@ -107,7 +103,6 @@ export function AppShell({ title, subtitle, children }) {
       .then((profile) => {
         if (!isMounted) return
         setCurrentUser(profile)
-        // Keep profile cache aligned with backend role/permissions changes.
         saveUserProfile(profile, true)
       })
       .catch(() => {
@@ -162,7 +157,7 @@ export function AppShell({ title, subtitle, children }) {
     return items.map((item) => {
       const hasChildren = Array.isArray(item.children) && item.children.length > 0
       const isOpen = openMenus.has(item.key)
-      const isActive = !!item.path && location.pathname === item.path
+      const isActive = !!item.path && location.pathname.startsWith(item.path)
 
       return (
         <div key={item.key}>
@@ -192,14 +187,12 @@ export function AppShell({ title, subtitle, children }) {
           {hasChildren && isOpen && !sidebarCollapsed ? (
             <div className="ml-5 mt-1 border-l border-slate-800 pl-3">
               {item.children.map((child) => (
-                <button
+                <span
                   key={child}
-                  type="button"
-                  title={child}
-                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-slate-300 transition hover:bg-slate-800/70 hover:text-white"
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-slate-400"
                 >
                   {child}
-                </button>
+                </span>
               ))}
             </div>
           ) : null}
@@ -333,6 +326,3 @@ export function AppShell({ title, subtitle, children }) {
     </div>
   )
 }
-
-
-

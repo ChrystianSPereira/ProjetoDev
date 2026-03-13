@@ -54,7 +54,7 @@ def test_audit_only_coordinator_can_access_logs(client: TestClient, seeded_db: d
 
     response = client.get("/audit/logs", headers=reader_headers)
     assert response.status_code == 403
-    assert response.json()["message"] == "Somente coordenador pode consultar auditoria."
+    assert response.json()["message"] == "Somente coordenador/admin pode consultar auditoria."
 
 
 def test_audit_logs_visibility_by_scope_and_sector(client: TestClient, seeded_db: dict):

@@ -1,4 +1,4 @@
-﻿"""Authentication routes (login and current user profile)."""
+"""Authentication routes (login and current user profile)."""
 
 from datetime import timedelta
 
@@ -25,6 +25,7 @@ def login(
 ) -> TokenResponse:
     """Authenticate by corporate email, user name, or email prefix and return JWT."""
     login_input = form_data.username.strip().lower()
+    email_prefix_pattern = f"{login_input}@%"
 
     user = (
         db.query(User)
@@ -32,7 +33,7 @@ def login(
             or_(
                 func.lower(User.email) == login_input,
                 func.lower(User.name) == login_input,
-                func.lower(func.split_part(User.email, "@", 1)) == login_input,
+                func.lower(User.email).like(email_prefix_pattern),
             )
         )
         .order_by(User.id.asc())
@@ -60,3 +61,4 @@ def login(
 def read_me(current_user: User = Depends(get_current_user)) -> User:
     """Return authenticated user profile from bearer token."""
     return current_user
+

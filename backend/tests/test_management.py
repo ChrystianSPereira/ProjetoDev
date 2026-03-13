@@ -37,7 +37,7 @@ def test_management_non_coordinator_cannot_create_sector(
     )
 
     assert response.status_code == 403
-    assert response.json()["message"] == "Somente coordenador pode realizar esta acao."
+    assert response.json()["message"] == "Somente coordenador/admin pode realizar esta acao."
 
 
 def test_management_coordinator_can_create_user_only_in_own_sector(
