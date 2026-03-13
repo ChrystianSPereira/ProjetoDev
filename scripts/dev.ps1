@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("up", "down", "logs", "restart", "reset", "status", "pytest", "deps")]
+    [ValidateSet("up", "down", "logs", "restart", "reset", "status", "pytest", "deps", "seed")]
     [string]$Action
 )
 
@@ -17,6 +17,7 @@ function Show-Menu {
     Write-Host "6) status  - Mostra status dos servicos"
     Write-Host "7) pytest  - Roda testes automatizados do backend"
     Write-Host "8) deps    - Instala dependencias do frontend local"
+    Write-Host "9) seed    - Limpa banco e popula dados realistas de teste"
     Write-Host ""
 }
 
@@ -44,7 +45,7 @@ function Install-FrontendDependencies {
 
 if (-not $Action) {
     Show-Menu
-    $choice = Read-Host "Escolha uma opcao (1-8)"
+    $choice = Read-Host "Escolha uma opcao (1-9)"
 
     $Action = switch ($choice) {
         "1" { "up" }
@@ -55,6 +56,7 @@ if (-not $Action) {
         "6" { "status" }
         "7" { "pytest" }
         "8" { "deps" }
+        "9" { "seed" }
         default {
             throw "Opcao invalida: $choice"
         }
@@ -101,6 +103,10 @@ try {
         }
         "deps" {
             Install-FrontendDependencies
+            break
+        }
+        "seed" {
+            python backend/scripts/reset_and_seed_demo.py
             break
         }
     }
