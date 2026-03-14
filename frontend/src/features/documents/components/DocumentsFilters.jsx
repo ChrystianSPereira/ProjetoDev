@@ -7,6 +7,14 @@ export function DocumentsFilters({
   onChange,
   onSubmit,
   onClear,
+  statusOptions = [
+    { value: '', label: 'Status (com foco em vigente)' },
+    { value: 'DRAFT', label: 'Rascunho' },
+    { value: 'IN_REVIEW', label: 'Em Revisao' },
+    { value: 'ACTIVE', label: 'Vigente' },
+    { value: 'OBSOLETE', label: 'Obsoleto' },
+  ],
+  statusDisabled = false,
 }) {
   return (
     <form className="grid gap-2 md:grid-cols-[1fr_190px_190px_170px_170px_auto_auto]" onSubmit={onSubmit}>
@@ -57,12 +65,13 @@ export function DocumentsFilters({
         value={filters.status}
         onChange={(event) => onChange('status', event.target.value)}
         className={selectClass}
+        disabled={statusDisabled}
       >
-        <option value="">Status (com foco em vigente)</option>
-        <option value="DRAFT">Rascunho</option>
-        <option value="IN_REVIEW">Em Revisao</option>
-        <option value="ACTIVE">Vigente</option>
-        <option value="OBSOLETE">Obsoleto</option>
+        {statusOptions.map((option) => (
+          <option key={option.value || 'all'} value={option.value}>
+            {option.label}
+          </option>
+        ))}
       </select>
 
       <button

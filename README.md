@@ -62,3 +62,10 @@ ProjetoDev/
 - comunicacao entre frontend e backend
 - validacao das regras de negocio
 - testes basicos
+
+## Usúarios 
+
+ADMINISTRADOR: admin@local.com / Admin@123
+COORDENADOR: coord.qualidade@local.com / Coord@123
+AUTOR: autor.qualidade@local.com / Autor@123
+LEITOR: leitor.qualidade@local.com / Leitor@123

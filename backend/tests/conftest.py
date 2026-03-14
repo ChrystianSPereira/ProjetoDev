@@ -107,8 +107,15 @@ def seeded_db(db_session: Session) -> dict:
         role=UserRole.LEITOR,
         sector_id=sector_b.id,
     )
+    admin = User(
+        name="Administrador",
+        email="admin@local.com",
+        password_hash=get_password_hash("123456"),
+        role=UserRole.ADMINISTRADOR,
+        sector_id=sector_a.id,
+    )
 
-    db_session.add_all([coordinator_a, coordinator_b, author_a, author_b, reader_b])
+    db_session.add_all([coordinator_a, coordinator_b, author_a, author_b, reader_b, admin])
     db_session.commit()
 
     return {
@@ -120,6 +127,7 @@ def seeded_db(db_session: Session) -> dict:
         "author_a": author_a,
         "author_b": author_b,
         "reader_b": reader_b,
+        "admin": admin,
         "default_expiration": date(2030, 1, 1).isoformat(),
     }
 

@@ -1,6 +1,6 @@
 """Authentication request/response schemas."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..models.enums import UserRole
 
@@ -19,3 +19,13 @@ class AuthenticatedUserResponse(BaseModel):
     sector_id: int
 
     model_config = {"from_attributes": True}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8)
+    confirm_new_password: str = Field(min_length=8)
+
+
+class MessageResponse(BaseModel):
+    message: str

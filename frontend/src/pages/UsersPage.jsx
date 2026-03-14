@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
 import { getAccessToken } from '../features/auth/authStorage'
@@ -276,7 +276,7 @@ export function UsersPage() {
 
   return (
     <AppShell title="Gestao de Usuarios" subtitle="Administracao de acessos e perfis da plataforma.">
-      {({ palette, isAdmin, isDark, currentUser }) => {
+      {({ palette, canManageUsers, isDark, currentUser }) => {
         const inputClass = isDark
           ? 'h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
           : 'h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none'
@@ -293,7 +293,7 @@ export function UsersPage() {
 
         return (
           <>
-            {!isAdmin ? (
+            {!canManageUsers ? (
               <article className={`rounded-2xl border p-4 ${palette.panel}`}>
                 <p className="text-sm text-rose-500">Acesso restrito ao perfil Administrador.</p>
               </article>
@@ -560,6 +560,7 @@ export function UsersPage() {
     </AppShell>
   )
 }
+
 
 
 

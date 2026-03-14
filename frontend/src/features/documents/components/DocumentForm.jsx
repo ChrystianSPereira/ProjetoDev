@@ -26,6 +26,7 @@ export function DocumentForm({
   onSaveDraft,
   onSubmitReview,
   disabled,
+  disabledReason = '',
   isDark = true,
 }) {
   const [values, setValues] = useState(initialValues)
@@ -35,7 +36,7 @@ export function DocumentForm({
   const fileInputId = useId()
   const fileInputRef = useRef(null)
 
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors])
+  const hasErrors = useMemo(() => Object.values(errors).some(Boolean), [errors])
 
   const normalizedInputClass = useMemo(() => ensureFullWidthClass(inputClass), [inputClass])
   const normalizedSelectClass = useMemo(() => ensureFullWidthClass(selectClass), [selectClass])
@@ -64,10 +65,16 @@ export function DocumentForm({
 
   function setField(key, value) {
     setValues((previous) => ({ ...previous, [key]: value }))
-    setErrors((previous) => ({ ...previous, [key]: undefined }))
+    setErrors((previous) => {
+      if (!(key in previous)) return previous
+      const next = { ...previous }
+      delete next[key]
+      return next
+    })
   }
 
   function applyFile(file) {
+    if (disabled) return
     if (!file) return
     setField('fileName', file.name)
     setField('fileUri', `/uploads/${file.name}`)
@@ -92,16 +99,19 @@ export function DocumentForm({
   }
 
   function handleDragOver(event) {
+    if (disabled) return
     event.preventDefault()
     setDragActive(true)
   }
 
   function handleDragLeave(event) {
+    if (disabled) return
     event.preventDefault()
     setDragActive(false)
   }
 
   function handleDrop(event) {
+    if (disabled) return
     event.preventDefault()
     setDragActive(false)
     const file = event.dataTransfer?.files?.[0]
@@ -110,12 +120,14 @@ export function DocumentForm({
 
   async function handleSaveDraft(event) {
     event.preventDefault()
+    if (disabled) return
     if (!runValidation()) return
     await onSaveDraft(buildPayload())
   }
 
   async function handleSubmitReview(event) {
     event.preventDefault()
+    if (disabled) return
     if (!runValidation()) return
     await onSubmitReview(buildPayload())
   }
@@ -131,6 +143,7 @@ export function DocumentForm({
             value={values.title}
             onChange={(event) => setField('title', event.target.value)}
             placeholder="Ex: POP Limpeza Hospitalar"
+            disabled={disabled}
           />
           {errors.title ? <p className="mt-1 text-[11px] text-rose-500">{errors.title}</p> : null}
         </div>
@@ -143,6 +156,7 @@ export function DocumentForm({
             value={values.code}
             onChange={(event) => setField('code', event.target.value)}
             placeholder="Ex: POP-001"
+            disabled={disabled}
           />
           {errors.code ? <p className="mt-1 text-[11px] text-rose-500">{errors.code}</p> : null}
         </div>
@@ -155,6 +169,7 @@ export function DocumentForm({
             value={values.scope}
             onChange={(event) => setField('scope', event.target.value)}
             style={{ colorScheme: isDark ? 'dark' : 'light' }}
+            disabled={disabled}
           >
             <option value="LOCAL">Local (setor)</option>
             <option value="CORPORATE">Corporativo</option>
@@ -169,6 +184,7 @@ export function DocumentForm({
             value={values.sectorId}
             onChange={(event) => setField('sectorId', event.target.value)}
             style={{ colorScheme: isDark ? 'dark' : 'light' }}
+            disabled={disabled}
           >
             <option value="">Selecione o setor</option>
             {sectors.map((sector) => (
@@ -188,6 +204,7 @@ export function DocumentForm({
             value={values.documentTypeId}
             onChange={(event) => setField('documentTypeId', event.target.value)}
             style={{ colorScheme: isDark ? 'dark' : 'light' }}
+            disabled={disabled}
           >
             <option value="">Selecione o tipo documental</option>
             {documentTypes.map((documentType) => (
@@ -207,6 +224,7 @@ export function DocumentForm({
             className={normalizedInputClass}
             value={values.expirationDate}
             onChange={(event) => setField('expirationDate', event.target.value)}
+            disabled={disabled}
           />
           {errors.expirationDate ? <p className="mt-1 text-[11px] text-rose-500">{errors.expirationDate}</p> : null}
         </div>
@@ -214,11 +232,12 @@ export function DocumentForm({
         <div className="md:col-span-2">
           <label className={labelClass}>Arquivo</label>
           <div
-            className={uploadCardClass}
+            className={`${uploadCardClass} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
             onDragOver={handleDragOver}
             onDragEnter={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            aria-disabled={disabled}
           >
             <input
               id={fileInputId}
@@ -226,6 +245,7 @@ export function DocumentForm({
               type="file"
               className="hidden"
               onChange={(event) => applyFile(event.target.files?.[0])}
+              disabled={disabled}
             />
 
             <div className="flex flex-col items-center justify-center gap-2 py-2 text-center">
@@ -235,7 +255,13 @@ export function DocumentForm({
               <p className={hintClass}>ou</p>
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (disabled) return
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = ''
+                    fileInputRef.current.click()
+                  }
+                }}
                 className={uploadButtonClass}
                 disabled={disabled}
               >
@@ -254,7 +280,8 @@ export function DocumentForm({
         </div>
       </div>
 
-      {hasErrors ? <p className="text-[11px] text-rose-500">Corrija os campos destacados para continuar.</p> : null}
+      {disabledReason ? <p className="text-[11px] text-amber-400">{disabledReason}</p> : null}
+      {!disabled && hasErrors ? <p className="text-[11px] text-rose-500">Corrija os campos destacados para continuar.</p> : null}
 
       <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
         <button

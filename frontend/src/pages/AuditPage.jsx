@@ -1,11 +1,18 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
 import { getAccessToken } from '../features/auth/authStorage'
 import { listAuditLogsRequest } from '../lib/api'
 
 const PAGE_SIZE = 20
-const EVENT_TYPES = ['CREATED', 'STATUS_CHANGED', 'APPROVED', 'REJECTED']
+const EVENT_TYPES = [
+  { value: 'CREATED', label: 'Criado' },
+  { value: 'STATUS_CHANGED', label: 'Mudanca de status' },
+  { value: 'APPROVED', label: 'Aprovado' },
+  { value: 'REJECTED', label: 'Reprovado' },
+]
+
+const EVENT_TYPE_LABELS = Object.fromEntries(EVENT_TYPES.map((item) => [item.value, item.label]))
 
 function eventBadgeClass(eventType, isDark) {
   const base = 'inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold'
@@ -38,6 +45,10 @@ function scopeBadgeClass(scope, isDark) {
   return isDark
     ? 'inline-flex rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] font-semibold text-amber-300'
     : 'inline-flex rounded-full border border-amber-400/50 bg-amber-100 px-2 py-1 text-[10px] font-semibold text-amber-700'
+}
+
+function eventTypeLabel(eventType) {
+  return EVENT_TYPE_LABELS[eventType] || eventType
 }
 
 function toIsoFromDate(dateText, endOfDay = false) {
@@ -114,7 +125,7 @@ export function AuditPage() {
       title="Auditoria e Compliance"
       subtitle="Consulta rastreavel de eventos por documento, status e responsavel."
     >
-      {({ palette, isDark, isAdmin }) => {
+      {({ palette, isDark, canAccessAudit }) => {
         const inputClass = isDark
           ? 'h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
           : 'h-10 rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none'
@@ -125,7 +136,7 @@ export function AuditPage() {
 
         const selectClass = `${inputClass} appearance-none pr-9`
 
-        if (!isAdmin) {
+        if (!canAccessAudit) {
           return (
             <article className={`rounded-2xl border p-4 ${palette.panel}`}>
               <p className="text-sm text-rose-500">Acesso restrito ao perfil Coordenador/Admin.</p>
@@ -163,8 +174,8 @@ export function AuditPage() {
                 >
                   <option value="">Todos eventos</option>
                   {EVENT_TYPES.map((eventType) => (
-                    <option key={eventType} value={eventType}>
-                      {eventType}
+                    <option key={eventType.value} value={eventType.value}>
+                      {eventType.label}
                     </option>
                   ))}
                 </select>
@@ -240,7 +251,7 @@ export function AuditPage() {
                           {new Date(item.occurred_at).toLocaleString('pt-BR')}
                         </td>
                         <td className="px-2.5 py-2">
-                          <span className={eventBadgeClass(item.event_type, isDark)}>{item.event_type}</span>
+                          <span className={eventBadgeClass(item.event_type, isDark)}>{eventTypeLabel(item.event_type)}</span>
                         </td>
                         <td className="px-2.5 py-2">
                           <p className="font-semibold">{item.document_code}</p>
@@ -302,3 +313,6 @@ export function AuditPage() {
     </AppShell>
   )
 }
+
+
+

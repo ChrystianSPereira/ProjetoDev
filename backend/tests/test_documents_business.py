@@ -206,3 +206,213 @@ def test_search_returns_only_active_and_visible_documents(client: TestClient, se
     assert "LOCAL-B-001" in codes
     assert "LOCAL-A-001" not in codes
 
+
+
+def test_reader_list_and_detail_show_only_active_versions(client: TestClient, seeded_db: dict):
+    approved = _create_and_approve_version(
+        client,
+        code="LOCAL-B-ONLY-ACTIVE",
+        title="Local B Ativo",
+        scope="LOCAL",
+        sector_id=seeded_db["sector_b"].id,
+        document_type_id=seeded_db["doc_type"].id,
+        file_uri="s3://bucket/local-b-active-v1.pdf",
+        expiration_date=seeded_db["default_expiration"],
+        author_email=seeded_db["author_b"].email,
+        coordinator_email=seeded_db["coordinator_b"].email,
+    )
+
+    author_headers = login_headers(client, seeded_db["author_b"].email)
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "LOCAL-B-ONLY-ACTIVE",
+            "title": "Local B Rascunho",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_b"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/local-b-draft-v2.pdf",
+        },
+        headers=author_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+
+    reader_headers = login_headers(client, seeded_db["reader_b"].email)
+
+    list_resp = client.get("/documents", headers=reader_headers)
+    assert list_resp.status_code == 200, list_resp.text
+    list_items = [item for item in list_resp.json()["items"] if item["code"] == "LOCAL-B-ONLY-ACTIVE"]
+    assert len(list_items) == 1
+    assert list_items[0]["status"] == "ACTIVE"
+
+    list_draft_resp = client.get("/documents?status=DRAFT", headers=reader_headers)
+    assert list_draft_resp.status_code == 200, list_draft_resp.text
+    assert all(item["status"] == "ACTIVE" for item in list_draft_resp.json()["items"])
+    assert list_draft_resp.json()["total"] == 0
+
+    detail_resp = client.get(f"/documents/{approved['document_id']}/detail", headers=reader_headers)
+    assert detail_resp.status_code == 200, detail_resp.text
+    versions = detail_resp.json()["versions"]
+    assert len(versions) == 1
+    assert versions[0]["status"] == "ACTIVE"
+
+
+def test_author_can_create_and_submit_but_cannot_approve_or_reject(client: TestClient, seeded_db: dict):
+    author_headers = login_headers(client, seeded_db["author_a"].email)
+
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "AUTOR-FLOW-001",
+            "title": "Fluxo do Autor",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_a"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/autor-flow-v1.pdf",
+        },
+        headers=author_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+    draft = draft_resp.json()
+
+    submit_resp = client.post(f"/documents/{draft['id']}/submit", headers=author_headers)
+    assert submit_resp.status_code == 200, submit_resp.text
+    assert submit_resp.json()["status"] == "IN_REVIEW"
+
+    approve_resp = client.post(f"/documents/{draft['id']}/approve", headers=author_headers)
+    assert approve_resp.status_code == 403
+
+    reject_resp = client.post(
+        f"/documents/{draft['id']}/reject",
+        json={"reason": "Sem permissao"},
+        headers=author_headers,
+    )
+    assert reject_resp.status_code == 403
+
+
+def test_coordinator_can_approve_in_review_from_own_sector(client: TestClient, seeded_db: dict):
+    author_headers = login_headers(client, seeded_db["author_a"].email)
+    coordinator_headers = login_headers(client, seeded_db["coordinator_a"].email)
+
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "COORD-APPROVE-001",
+            "title": "Aprovacao Coordenador",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_a"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/coord-approve-v1.pdf",
+        },
+        headers=author_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+    version_id = draft_resp.json()["id"]
+
+    submit_resp = client.post(f"/documents/{version_id}/submit", headers=author_headers)
+    assert submit_resp.status_code == 200, submit_resp.text
+    assert submit_resp.json()["status"] == "IN_REVIEW"
+
+    approve_resp = client.post(f"/documents/{version_id}/approve", headers=coordinator_headers)
+    assert approve_resp.status_code == 200, approve_resp.text
+    approved = approve_resp.json()
+
+    assert approved["status"] == "ACTIVE"
+    assert approved["approved_by_user_id"] == seeded_db["coordinator_a"].id
+
+
+def test_coordinator_can_reject_in_review_from_own_sector(client: TestClient, seeded_db: dict):
+    author_headers = login_headers(client, seeded_db["author_a"].email)
+    coordinator_headers = login_headers(client, seeded_db["coordinator_a"].email)
+
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "COORD-REJECT-001",
+            "title": "Reprovacao Coordenador",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_a"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/coord-reject-v1.pdf",
+        },
+        headers=author_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+    version_id = draft_resp.json()["id"]
+
+    submit_resp = client.post(f"/documents/{version_id}/submit", headers=author_headers)
+    assert submit_resp.status_code == 200, submit_resp.text
+    assert submit_resp.json()["status"] == "IN_REVIEW"
+
+    reject_reason = "Necessario ajustar conteudo e referencias."
+    reject_resp = client.post(
+        f"/documents/{version_id}/reject",
+        json={"reason": reject_reason},
+        headers=coordinator_headers,
+    )
+    assert reject_resp.status_code == 200, reject_resp.text
+    rejected = reject_resp.json()
+
+    assert rejected["status"] == "DRAFT"
+    assert rejected["rejection_reason"] == reject_reason
+
+
+def test_admin_has_full_document_permissions(client: TestClient, seeded_db: dict):
+    admin_headers = login_headers(client, seeded_db["admin"].email)
+
+    # Admin creates draft in another sector (cross-sector)
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "ADMIN-FULL-001",
+            "title": "Documento Administrador",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_b"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/admin-full-v1.pdf",
+        },
+        headers=admin_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+    draft = draft_resp.json()
+
+    submit_resp = client.post(f"/documents/{draft['id']}/submit", headers=admin_headers)
+    assert submit_resp.status_code == 200, submit_resp.text
+    assert submit_resp.json()["status"] == "IN_REVIEW"
+
+    approve_resp = client.post(f"/documents/{draft['id']}/approve", headers=admin_headers)
+    assert approve_resp.status_code == 200, approve_resp.text
+    assert approve_resp.json()["status"] == "ACTIVE"
+
+    # Create another version and reject as admin
+    draft_v2_resp = client.post(
+        "/documents/drafts",
+        json={
+            "code": "ADMIN-FULL-001",
+            "title": "Documento Administrador v2",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_b"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/admin-full-v2.pdf",
+        },
+        headers=admin_headers,
+    )
+    assert draft_v2_resp.status_code == 201, draft_v2_resp.text
+    draft_v2 = draft_v2_resp.json()
+
+    submit_v2_resp = client.post(f"/documents/{draft_v2['id']}/submit", headers=admin_headers)
+    assert submit_v2_resp.status_code == 200, submit_v2_resp.text
+
+    reject_resp = client.post(
+        f"/documents/{draft_v2['id']}/reject",
+        json={"reason": "Ajustes necessarios."},
+        headers=admin_headers,
+    )
+    assert reject_resp.status_code == 200, reject_resp.text
+    assert reject_resp.json()["status"] == "DRAFT"

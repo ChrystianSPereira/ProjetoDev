@@ -110,6 +110,8 @@ def _pick_display_version(
     active_version = next((version for version in versions_desc if version.status == DocumentStatus.ACTIVE), None)
 
     if current_user.role == UserRole.LEITOR:
+        if status_filter is not None and status_filter != DocumentStatus.ACTIVE:
+            return None
         return active_version
 
     if status_filter is not None:
@@ -142,9 +144,9 @@ def create_draft(
     current_user: User = Depends(get_current_user),
 ) -> DocumentVersion:
     """Create a draft version for a document identity in the user's sector."""
-    _require_roles(current_user, UserRole.AUTOR)
+    _require_roles(current_user, UserRole.AUTOR, UserRole.ADMINISTRADOR)
 
-    if payload.scope == DocumentScope.LOCAL and payload.sector_id != current_user.sector_id:
+    if current_user.role != UserRole.ADMINISTRADOR and payload.scope == DocumentScope.LOCAL and payload.sector_id != current_user.sector_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Documento local deve ser criado no setor do usuario.",
@@ -242,12 +244,13 @@ def list_documents(
         joinedload(Document.versions).joinedload(DocumentVersion.approved_by),
     )
 
-    query = query.filter(
-        or_(
-            Document.scope == DocumentScope.CORPORATE,
-            Document.sector_id == current_user.sector_id,
+    if current_user.role != UserRole.ADMINISTRADOR:
+        query = query.filter(
+            or_(
+                Document.scope == DocumentScope.CORPORATE,
+                Document.sector_id == current_user.sector_id,
+            )
         )
-    )
 
     if q:
         pattern = f"%{q}%"
@@ -312,14 +315,16 @@ def list_my_drafts(
     current_user: User = Depends(get_current_user),
 ) -> DocumentWorkflowListResponse:
     """List the current author's draft versions for intuitive submit flow."""
-    _require_roles(current_user, UserRole.AUTOR)
+    _require_roles(current_user, UserRole.AUTOR, UserRole.ADMINISTRADOR)
 
     query = (
         db.query(DocumentVersion, Document)
         .join(Document, Document.id == DocumentVersion.document_id)
-        .filter(DocumentVersion.created_by_user_id == current_user.id)
         .filter(DocumentVersion.status == DocumentStatus.DRAFT)
     )
+
+    if current_user.role == UserRole.AUTOR:
+        query = query.filter(DocumentVersion.created_by_user_id == current_user.id)
 
     total = query.count()
     rows = (
@@ -341,7 +346,7 @@ def list_review_queue(
     current_user: User = Depends(get_current_user),
 ) -> DocumentWorkflowListResponse:
     """List versions in review for coordinator approval flow."""
-    _require_roles(current_user, UserRole.COORDENADOR)
+    _require_roles(current_user, UserRole.COORDENADOR, UserRole.ADMINISTRADOR)
 
     query = (
         db.query(DocumentVersion, Document)
@@ -371,13 +376,13 @@ def submit_for_review(
     current_user: User = Depends(get_current_user),
 ) -> DocumentVersion:
     """Move draft to IN_REVIEW by the draft author."""
-    _require_roles(current_user, UserRole.AUTOR)
+    _require_roles(current_user, UserRole.AUTOR, UserRole.ADMINISTRADOR)
 
     version = db.query(DocumentVersion).filter(DocumentVersion.id == version_id).first()
     if not version:
         raise HTTPException(status_code=404, detail="Versao nao encontrada.")
 
-    if version.created_by_user_id != current_user.id:
+    if current_user.role != UserRole.ADMINISTRADOR and version.created_by_user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Somente o autor pode submeter.")
 
     if version.status != DocumentStatus.DRAFT:
@@ -409,7 +414,7 @@ def approve_version(
     current_user: User = Depends(get_current_user),
 ) -> DocumentVersion:
     """Approve version in review and obsolete the currently active one."""
-    _require_roles(current_user, UserRole.COORDENADOR)
+    _require_roles(current_user, UserRole.COORDENADOR, UserRole.ADMINISTRADOR)
 
     version = (
         db.query(DocumentVersion)
@@ -503,7 +508,7 @@ def reject_version(
     current_user: User = Depends(get_current_user),
 ) -> DocumentVersion:
     """Reject version in review, moving it back to DRAFT."""
-    _require_roles(current_user, UserRole.COORDENADOR)
+    _require_roles(current_user, UserRole.COORDENADOR, UserRole.ADMINISTRADOR)
 
     version = db.query(DocumentVersion).filter(DocumentVersion.id == version_id).first()
     if not version:
@@ -557,13 +562,15 @@ def search_active_documents(
         db.query(DocumentVersion, Document)
         .join(Document, Document.id == DocumentVersion.document_id)
         .filter(DocumentVersion.status == DocumentStatus.ACTIVE)
-        .filter(
+    )
+
+    if current_user.role != UserRole.ADMINISTRADOR:
+        base_query = base_query.filter(
             or_(
                 Document.scope == DocumentScope.CORPORATE,
                 Document.sector_id == current_user.sector_id,
             )
         )
-    )
 
     if q:
         pattern = f"%{q}%"
@@ -731,4 +738,9 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
+
+
+
+
+
 

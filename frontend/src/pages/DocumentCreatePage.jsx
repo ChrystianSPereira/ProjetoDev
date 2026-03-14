@@ -38,6 +38,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
   const [searchParams] = useSearchParams()
 
   const actor = useMemo(() => toActor(currentUser), [currentUser])
+  const canCreateDraft = actor.role === 'AUTOR' || actor.role === 'ADMINISTRADOR'
 
   const [metadata, setMetadata] = useState({ sectors: [], documentTypes: [] })
   const [initialValues, setInitialValues] = useState(buildInitialFormValues(actor.sector_id))
@@ -114,8 +115,8 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
   }, [searchParams, actor])
 
   async function handleSaveDraft(payload) {
-    if (actor.role !== 'AUTOR') {
-      setError('Apenas o perfil Autor pode criar rascunhos.')
+    if (!canCreateDraft) {
+      setError('Perfil sem permissao para criar rascunhos.')
       return
     }
 
@@ -139,8 +140,8 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
   }
 
   async function handleSubmitReview(payload) {
-    if (actor.role !== 'AUTOR') {
-      setError('Apenas o perfil Autor pode criar e submeter rascunhos.')
+    if (!canCreateDraft) {
+      setError('Perfil sem permissao para criar e submeter rascunhos.')
       return
     }
 
@@ -174,6 +175,17 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
   const backButtonClass = isDark
     ? 'h-9 rounded-xl border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800'
     : 'h-9 rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+
+  if (!canCreateDraft) {
+    return (
+      <article className={panelClass}>
+        <p className="text-sm text-rose-500">Apenas Autor ou Administrador podem criar ou editar rascunhos.</p>
+        <Link to="/documentos" className={backButtonClass}>
+          Voltar para listagem
+        </Link>
+      </article>
+    )
+  }
 
   return (
     <>
@@ -214,7 +226,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
           selectClass={selectClass}
           onSaveDraft={handleSaveDraft}
           onSubmitReview={handleSubmitReview}
-          disabled={saving || actor.role !== 'AUTOR'}
+          disabled={saving || !canCreateDraft}
           isDark={isDark}
         />
       </article>
@@ -232,6 +244,8 @@ export function DocumentCreatePage() {
     </AppShell>
   )
 }
+
+
 
 
 

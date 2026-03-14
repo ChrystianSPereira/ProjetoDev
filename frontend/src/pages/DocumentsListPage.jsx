@@ -80,6 +80,11 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
   const [approvingVersionId, setApprovingVersionId] = useState(null)
 
   const actor = useMemo(() => toActor(currentUser), [currentUser])
+  const isReader = actor.role === 'LEITOR'
+  const isAdmin = actor.role === 'ADMINISTRADOR'
+  const statusOptions = isReader
+    ? [{ value: 'ACTIVE', label: 'Vigente' }]
+    : undefined
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / PAGE_SIZE)), [total])
 
   const loadMetadata = useCallback(async () => {
@@ -138,20 +143,32 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
     loadList(page, appliedFilters)
   }, [actor, page, appliedFilters, loadList])
 
+  useEffect(() => {
+    if (!isReader) return
+
+    setFilters((previous) => (previous.status === 'ACTIVE' ? previous : { ...previous, status: 'ACTIVE' }))
+    setAppliedFilters((previous) => (previous.status === 'ACTIVE' ? previous : { ...previous, status: 'ACTIVE' }))
+  }, [isReader])
+
   function canSubmit(row) {
-    return actor.role === 'AUTOR' && row.status === 'DRAFT' && Number(row.created_by_user_id) === Number(actor.id)
+    if (row.status !== 'DRAFT') return false
+    return isAdmin || (actor.role === 'AUTOR' && Number(row.created_by_user_id) === Number(actor.id))
   }
 
   function canReview(row) {
     if (row.status !== 'IN_REVIEW') return false
+    if (isAdmin) return true
     return actor.role === 'COORDENADOR' && Number(row.sector_id) === Number(actor.sector_id)
   }
 
   function canCreateRevision(row) {
-    return row.status === 'ACTIVE' && actor.role === 'AUTOR'
+    return row.status === 'ACTIVE' && (actor.role === 'AUTOR' || isAdmin)
   }
 
+  const canCreateDraft = actor.role === 'AUTOR' || isAdmin
+
   function openCreateModal() {
+    if (!canCreateDraft) return
     setError('')
     setFeedback('')
     setCreateModalMode('create')
@@ -184,8 +201,8 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
   }
 
   async function handleSaveDraftFromModal(payload) {
-    if (actor.role !== 'AUTOR') {
-      setError('Apenas o perfil Autor pode criar rascunhos.')
+    if (!(actor.role === 'AUTOR' || isAdmin)) {
+      setError('Perfil sem permissao para criar rascunhos.')
       return
     }
 
@@ -210,8 +227,8 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
   }
 
   async function handleSubmitReviewFromModal(payload) {
-    if (actor.role !== 'AUTOR') {
-      setError('Apenas o perfil Autor pode criar e submeter rascunhos.')
+    if (!(actor.role === 'AUTOR' || isAdmin)) {
+      setError('Perfil sem permissao para criar e submeter rascunhos.')
       return
     }
 
@@ -343,12 +360,15 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
           onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
           onSubmit={(event) => {
             event.preventDefault()
-            setAppliedFilters(filters)
+            setAppliedFilters(isReader ? { ...filters, status: 'ACTIVE' } : filters)
             setPage(1)
           }}
+          statusOptions={statusOptions}
+          statusDisabled={isReader}
           onClear={() => {
-            setFilters(INITIAL_FILTERS)
-            setAppliedFilters(INITIAL_FILTERS)
+            const reset = isReader ? { ...INITIAL_FILTERS, status: 'ACTIVE' } : INITIAL_FILTERS
+            setFilters(reset)
+            setAppliedFilters(reset)
             setPage(1)
           }}
         />
@@ -369,13 +389,15 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
       <article className={panelClass}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold">Listagem de documentos</h2>
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-500"
-          >
-            Novo documento
-          </button>
+          {canCreateDraft ? (
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-500"
+            >
+              Novo documento
+            </button>
+          ) : null}
         </div>
 
         {loading ? <p className={`mb-3 text-xs ${palette.textSecondary}`}>Carregando...</p> : null}
@@ -492,7 +514,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
                 selectClass={selectClass}
                 onSaveDraft={handleSaveDraftFromModal}
                 onSubmitReview={handleSubmitReviewFromModal}
-                disabled={creating || actor.role !== 'AUTOR'}
+                disabled={creating}
                 isDark={isDark}
               />
             </div>
@@ -527,6 +549,12 @@ export function DocumentsListPage() {
     </AppShell>
   )
 }
+
+
+
+
+
+
 
 
 

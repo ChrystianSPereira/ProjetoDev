@@ -23,11 +23,23 @@ function toActor(currentUser) {
   }
 }
 
+function eventTypeLabel(eventType) {
+  const labels = {
+    CREATED: 'Criado',
+    STATUS_CHANGED: 'Mudanca de status',
+    APPROVED: 'Aprovado',
+    REJECTED: 'Reprovado',
+  }
+
+  return labels[eventType] || eventType
+}
+
 function DocumentDetailContent({ palette, isDark, currentUser }) {
   const navigate = useNavigate()
   const { documentId } = useParams()
 
   const actor = useMemo(() => toActor(currentUser), [currentUser])
+  const isAdmin = actor.role === 'ADMINISTRADOR'
 
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -69,17 +81,19 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
   }, [loadDetail])
 
   function canSubmit(version) {
-    return actor.role === 'AUTOR' && version.status === 'DRAFT' && Number(version.created_by_user_id) === Number(actor.id)
+    if (version.status !== 'DRAFT') return false
+    return isAdmin || (actor.role === 'AUTOR' && Number(version.created_by_user_id) === Number(actor.id))
   }
 
   function canReview(version) {
     if (version.status !== 'IN_REVIEW') return false
+    if (isAdmin) return true
     if (actor.role !== 'COORDENADOR') return false
     return Number(detail?.sector_id) === Number(actor.sector_id)
   }
 
   function canCreateRevision() {
-    return actor.role === 'AUTOR'
+    return actor.role === 'AUTOR' || isAdmin
   }
 
   async function handleSubmit(version) {
@@ -317,7 +331,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
               {detail.audits.map((item) => (
                 <tr key={item.id} className="border-t border-slate-700/20">
                   <td className="px-2.5 py-2">{new Date(item.occurred_at).toLocaleString('pt-BR')}</td>
-                  <td className="px-2.5 py-2">{item.event_type}</td>
+                  <td className="px-2.5 py-2">{eventTypeLabel(item.event_type)}</td>
                   <td className="px-2.5 py-2">#{item.version_id}</td>
                   <td className="px-2.5 py-2">{item.actor_user_name}</td>
                   <td className="px-2.5 py-2">{item.description}</td>
@@ -363,6 +377,10 @@ export function DocumentDetailPage() {
     </AppShell>
   )
 }
+
+
+
+
 
 
 

@@ -409,3 +409,22 @@ export async function listDocumentVersionsRequest(token, documentId) {
   return data
 }
 
+
+export async function changePasswordRequest(token, payload) {
+  const response = await fetch(`${API_BASE}/auth/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao atualizar senha.'))
+  }
+
+  return data
+}

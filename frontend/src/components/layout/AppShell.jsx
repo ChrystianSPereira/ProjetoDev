@@ -1,27 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { clearAccessToken, getAccessToken, getUserProfile, saveUserProfile } from '../../features/auth/authStorage'
-import { meRequest } from '../../lib/api'
+import { changePasswordRequest, meRequest } from '../../lib/api'
 
 const THEME_STORAGE_KEY = 'projetodev:login-theme'
 const SIDEBAR_COLLAPSED_KEY = 'projetodev:sidebar-collapsed'
 const DEFAULT_THEME = 'default'
-
-const OPERATION_MENU = [
-  { key: 'dashboard', label: 'Visao Geral', path: '/dashboard' },
-  {
-    key: 'documentos',
-    label: 'Centro de Documentos',
-    path: '/documentos',
-    children: ['Listagem principal', 'Criacao de rascunho', 'Detalhe e auditoria'],
-  },
-]
-
-const ADMIN_MENU = [
-  { key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' },
-  { key: 'auditoria', label: 'Auditoria e Compliance', path: '/auditoria' },
-]
 
 function getInitialTheme() {
   if (typeof window === 'undefined') {
@@ -42,7 +27,42 @@ function getInitialSidebarCollapsed() {
 }
 
 function isAdminRole(role) {
-  return ['COORDENADOR', 'ADMIN', 'ADMINISTRADOR'].includes(role)
+  return role === 'ADMINISTRADOR'
+}
+
+function canAccessAudit(role) {
+  return role === 'COORDENADOR' || role === 'ADMINISTRADOR'
+}
+
+function roleLabel(role) {
+  const labels = {
+    ADMINISTRADOR: 'Administrador',
+    COORDENADOR: 'Coordenador/Aprovador',
+    AUTOR: 'Autor',
+    LEITOR: 'Leitor',
+  }
+  return labels[role] || role || 'Sem perfil'
+}
+
+function buildOperationMenu() {
+  return [
+    { key: 'dashboard', label: 'Visao Geral', path: '/dashboard' },
+    { key: 'documentos', label: 'Centro de Documentos', path: '/documentos' },
+  ]
+}
+
+function buildAdminMenu(role) {
+  const items = []
+
+  if (isAdminRole(role)) {
+    items.push({ key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' })
+  }
+
+  if (canAccessAudit(role)) {
+    items.push({ key: 'auditoria', label: 'Auditoria e Compliance', path: '/auditoria' })
+  }
+
+  return items
 }
 
 function SectionTitle({ children, hidden }) {
@@ -66,9 +86,78 @@ function HamburgerIcon() {
   )
 }
 
-function Chevron({ open, hidden }) {
-  if (hidden) return null
-  return <span className="text-slate-500">{open ? 'v' : '>'}</span>
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <path
+        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-3.314 0-6 2.015-6 4.5a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5C18 16.015 15.314 14 12 14Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+function DotsVerticalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+      <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+    </svg>
+  )
+}
+
+
+function KeyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <path d="M14.5 5a4.5 4.5 0 1 0 3.2 7.7l3.6 3.6h1.7v-1.7h-1.7v-1.7h-1.7v-1.7h-1.7l-1-1a4.5 4.5 0 0 0-2.4-7.2Zm-2.7 4.5a1.8 1.8 0 1 1 3.5 0 1.8 1.8 0 0 1-3.5 0Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4v-2H6V6h4V4Zm7.3 4.3-1.4 1.4 1.6 1.6H9v2h8.5l-1.6 1.6 1.4 1.4L21.3 12l-4-3.7Z" fill="currentColor" />
+    </svg>
+  )
+}
+function PasswordCheckIcon({ status }) {
+  if (status === 'ok') {
+    return (
+      <span className="grid h-4 w-4 place-items-center rounded-full bg-emerald-600/20 text-emerald-400" aria-hidden="true">
+        <svg viewBox="0 0 20 20" className="h-3 w-3">
+          <path d="m5 10 3 3 7-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </span>
+    )
+  }
+
+  if (status === 'error') {
+    return <span className="h-4 w-4 rounded-full border border-rose-500 bg-rose-500/10" aria-hidden="true" />
+  }
+
+  return <span className="h-4 w-4 rounded-full border border-slate-500 bg-slate-500/10" aria-hidden="true" />
+}
+
+function validatePasswordInput(form) {
+  if (!form.currentPassword.trim()) {
+    return 'Informe a senha atual.'
+  }
+  if (form.newPassword.length < 8) {
+    return 'A nova senha deve ter pelo menos 8 caracteres.'
+  }
+  if (!/[A-Z]/.test(form.newPassword) || !/[a-z]/.test(form.newPassword) || !/\d/.test(form.newPassword) || !/[^A-Za-z0-9]/.test(form.newPassword)) {
+    return 'A nova senha deve conter maiuscula, minuscula, numero e caractere especial.'
+  }
+  if (form.newPassword !== form.confirmNewPassword) {
+    return 'A confirmacao da nova senha nao confere.'
+  }
+  if (form.newPassword === form.currentPassword) {
+    return 'A nova senha deve ser diferente da senha atual.'
+  }
+  return ''
 }
 
 export function AppShell({ title, subtitle, children }) {
@@ -78,11 +167,28 @@ export function AppShell({ title, subtitle, children }) {
   const [theme, setTheme] = useState(getInitialTheme)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarCollapsed)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const [openMenus, setOpenMenus] = useState(() => new Set(['documentos']))
   const [currentUser, setCurrentUser] = useState(() => getUserProfile())
 
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  })
+  const profileMenuRef = useRef(null)
+
   const isDark = theme === 'corporate-dark'
-  const isAdmin = isAdminRole(currentUser?.role)
+  const role = currentUser?.role || ''
+  const isAdmin = isAdminRole(role)
+  const hasAuditAccess = canAccessAudit(role)
+  const canManageUsers = isAdminRole(role)
+
+  const operationMenu = useMemo(() => buildOperationMenu(), [])
+  const adminMenu = useMemo(() => buildAdminMenu(role), [role])
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme)
@@ -134,18 +240,20 @@ export function AppShell({ title, subtitle, children }) {
     [isDark],
   )
 
-  function handleLogout() {
+    useEffect(() => {
+    function handlePointerDown(event) {
+      if (!profileMenuRef.current) return
+      if (!profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [])
+function handleLogout() {
     clearAccessToken()
     navigate('/login', { replace: true })
-  }
-
-  function toggleMenu(key) {
-    setOpenMenus((previous) => {
-      const next = new Set(previous)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
   }
 
   function goTo(path) {
@@ -153,10 +261,56 @@ export function AppShell({ title, subtitle, children }) {
     setMobileSidebarOpen(false)
   }
 
+  function openPasswordModal() {
+    setProfileMenuOpen(false)
+    setPasswordError('')
+    setPasswordSuccess('')
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    })
+    setShowPasswordModal(true)
+  }
+
+  async function handleSubmitPassword(event) {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+
+    const localError = validatePasswordInput(passwordForm)
+    if (localError) {
+      setPasswordError(localError)
+      return
+    }
+
+    const token = getAccessToken()
+    if (!token) {
+      handleLogout()
+      return
+    }
+
+    try {
+      setPasswordLoading(true)
+      const response = await changePasswordRequest(token, {
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword,
+        confirm_new_password: passwordForm.confirmNewPassword,
+      })
+      setPasswordSuccess(response?.message || 'Senha atualizada com sucesso.')
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      })
+    } catch (error) {
+      setPasswordError(error.message || 'Falha ao atualizar senha.')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
   function renderMenu(items) {
     return items.map((item) => {
-      const hasChildren = Array.isArray(item.children) && item.children.length > 0
-      const isOpen = openMenus.has(item.key)
       const isActive = !!item.path && location.pathname.startsWith(item.path)
 
       return (
@@ -167,12 +321,10 @@ export function AppShell({ title, subtitle, children }) {
             onClick={() => {
               if (item.path) {
                 goTo(item.path)
-                return
               }
-              if (hasChildren) toggleMenu(item.key)
             }}
             className={`flex w-full items-center rounded-lg px-2.5 py-2 text-sm font-medium transition ${
-              sidebarCollapsed ? 'justify-center' : 'justify-between'
+              sidebarCollapsed ? 'justify-center' : 'justify-start'
             } ${isActive ? 'bg-slate-800 text-white' : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'}`}
           >
             <span className={`inline-flex items-center ${sidebarCollapsed ? '' : 'gap-2'}`}>
@@ -181,25 +333,54 @@ export function AppShell({ title, subtitle, children }) {
               </span>
               {!sidebarCollapsed ? item.label : null}
             </span>
-            {hasChildren ? <Chevron open={isOpen} hidden={sidebarCollapsed} /> : null}
           </button>
-
-          {hasChildren && isOpen && !sidebarCollapsed ? (
-            <div className="ml-5 mt-1 border-l border-slate-800 pl-3">
-              {item.children.map((child) => (
-                <span
-                  key={child}
-                  className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-slate-400"
-                >
-                  {child}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
       )
     })
   }
+
+  const currentUserLabel = currentUser?.name || 'Usuario'
+  const currentRoleLabel = roleLabel(currentUser?.role)
+
+  const passwordCriteria = useMemo(
+    () => [
+      {
+        label: 'Minimo de 8 caracteres',
+        status: passwordForm.newPassword.length === 0 ? 'neutral' : passwordForm.newPassword.length >= 8 ? 'ok' : 'error',
+      },
+      {
+        label: 'Pelo menos 1 letra maiuscula',
+        status: passwordForm.newPassword.length === 0 ? 'neutral' : /[A-Z]/.test(passwordForm.newPassword) ? 'ok' : 'error',
+      },
+      {
+        label: 'Pelo menos 1 letra minuscula',
+        status: passwordForm.newPassword.length === 0 ? 'neutral' : /[a-z]/.test(passwordForm.newPassword) ? 'ok' : 'error',
+      },
+      {
+        label: 'Pelo menos 1 numero',
+        status: passwordForm.newPassword.length === 0 ? 'neutral' : /\d/.test(passwordForm.newPassword) ? 'ok' : 'error',
+      },
+      {
+        label: 'Pelo menos 1 caractere especial',
+        status:
+          passwordForm.newPassword.length === 0
+            ? 'neutral'
+            : /[^A-Za-z0-9]/.test(passwordForm.newPassword)
+              ? 'ok'
+              : 'error',
+      },
+      {
+        label: 'Confirmacao igual a nova senha',
+        status:
+          passwordForm.newPassword.length === 0 && passwordForm.confirmNewPassword.length === 0
+            ? 'neutral'
+            : passwordForm.confirmNewPassword.length > 0 && passwordForm.confirmNewPassword === passwordForm.newPassword
+              ? 'ok'
+              : 'error',
+      },
+    ],
+    [passwordForm.newPassword, passwordForm.confirmNewPassword],
+  )
 
   return (
     <div className={`theme-${theme} min-h-screen ${palette.page}`}>
@@ -216,7 +397,7 @@ export function AppShell({ title, subtitle, children }) {
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-slate-800 bg-slate-950 p-4 text-slate-100 transition-all duration-300 lg:static lg:z-0 lg:translate-x-0 ${
             mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}
+          } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} flex flex-col`}
         >
           <div className={`rounded-xl border border-slate-800 bg-slate-900 p-3 ${sidebarCollapsed ? 'lg:px-2' : ''}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center lg:justify-center' : 'gap-3'}`}>
@@ -232,16 +413,73 @@ export function AppShell({ title, subtitle, children }) {
             </div>
           </div>
 
-          <div className="mt-6 space-y-6">
+          <div className="mt-6 flex-1 space-y-6">
             <div>
               <SectionTitle hidden={sidebarCollapsed}>Operacao</SectionTitle>
-              <nav className="space-y-1">{renderMenu(OPERATION_MENU)}</nav>
+              <nav className="space-y-1">{renderMenu(operationMenu)}</nav>
             </div>
 
-            {isAdmin ? (
+            {adminMenu.length > 0 ? (
               <div>
                 <SectionTitle hidden={sidebarCollapsed}>Admin</SectionTitle>
-                <nav className="space-y-1">{renderMenu(ADMIN_MENU)}</nav>
+                <nav className="space-y-1">{renderMenu(adminMenu)}</nav>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="relative mt-4" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setProfileMenuOpen((value) => !value)}
+              className={`w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-left transition hover:bg-slate-800/80 ${sidebarCollapsed ? 'text-center' : ''}`}
+              aria-haspopup="menu"
+              aria-expanded={profileMenuOpen}
+            >
+              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between gap-2'}`}>
+                <div className="inline-flex min-w-0 items-center gap-2.5">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-800 text-slate-300">
+                    <UserIcon />
+                  </span>
+                  {!sidebarCollapsed ? (
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-white" title={currentUserLabel}>{currentUserLabel}</p>
+                      <p className="truncate text-xs text-slate-400" title={currentUser?.email || ''}>{currentUser?.email || currentRoleLabel}</p>
+                    </div>
+                  ) : null}
+                </div>
+                {!sidebarCollapsed ? (
+                  <span className={`grid h-7 w-7 place-items-center rounded-md border text-slate-300 transition ${profileMenuOpen ? 'border-slate-500 bg-slate-700' : 'border-slate-700 bg-slate-800'}`} aria-hidden="true">
+                    <DotsVerticalIcon />
+                  </span>
+                ) : null}
+              </div>
+            </button>
+
+            {profileMenuOpen ? (
+              <div className="absolute right-0 bottom-full z-30 mb-2 w-64 overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-xl">
+                <div className="border-b border-slate-700 px-3 py-2.5">
+                  <p className="truncate text-sm font-semibold text-white" title={currentUserLabel}>{currentUserLabel}</p>
+                  <p className="truncate text-xs text-slate-400" title={currentRoleLabel}>{currentRoleLabel}</p>
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={openPasswordModal}
+                  className="flex w-full items-center gap-2 border-t border-slate-800 px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800"
+                >
+                  <KeyIcon />
+                  Trocar senha
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 border-t border-slate-800 px-3 py-2 text-left text-sm text-rose-300 hover:bg-slate-800"
+                >
+                  <LogoutIcon />
+                  Sair
+                </button>
               </div>
             ) : null}
           </div>
@@ -305,24 +543,152 @@ export function AppShell({ title, subtitle, children }) {
                   </button>
                 </div>
 
+
+              </div>
+            </div>
+          </header>
+
+          <section className="space-y-4 p-6">
+            {children({
+              isDark,
+              palette,
+              currentUser,
+              isAdmin,
+              canAccessAudit: hasAuditAccess,
+              canManageUsers,
+            })}
+          </section>
+        </main>
+      </div>
+
+      {showPasswordModal ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 px-4">
+          <div className={`w-full max-w-lg rounded-2xl border p-5 ${isDark ? 'border-slate-700 bg-slate-900' : 'border-slate-300 bg-white'}`}>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Trocar senha</h2>
+                <p className={`text-sm ${palette.textSecondary}`}>Atualize sua senha com seguranca.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPasswordModal(false)}
+                className={`rounded-lg border px-3 py-1.5 text-sm ${
+                  isDark ? 'border-slate-700 text-slate-200 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitPassword} className="space-y-3">
+              <label className="block">
+                <span className={`mb-1 block text-xs font-semibold uppercase tracking-[0.08em] ${palette.textSecondary}`}>Senha atual</span>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-950 text-slate-100 focus:border-sky-500'
+                      : 'border-slate-300 bg-white text-slate-900 focus:border-sky-600'
+                  }`}
+                />
+              </label>
+
+              <label className="block">
+                <span className={`mb-1 block text-xs font-semibold uppercase tracking-[0.08em] ${palette.textSecondary}`}>Nova senha</span>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-950 text-slate-100 focus:border-sky-500'
+                      : 'border-slate-300 bg-white text-slate-900 focus:border-sky-600'
+                  }`}
+                />
+              </label>
+
+              <label className="block">
+                <span className={`mb-1 block text-xs font-semibold uppercase tracking-[0.08em] ${palette.textSecondary}`}>Confirmar nova senha</span>
+                <input
+                  type="password"
+                  value={passwordForm.confirmNewPassword}
+                  onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmNewPassword: event.target.value }))}
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none ${
+                    isDark
+                      ? 'border-slate-700 bg-slate-950 text-slate-100 focus:border-sky-500'
+                      : 'border-slate-300 bg-white text-slate-900 focus:border-sky-600'
+                  }`}
+                />
+              </label>
+
+              <div className={`rounded-xl border px-3 py-2.5 text-xs ${isDark ? 'border-slate-700 bg-slate-950' : 'border-slate-200 bg-slate-50'}`}>
+                <p className={`mb-2 font-semibold ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Criterios da nova senha</p>
+                <div className="space-y-1.5">
+                  {passwordCriteria.map((criterion) => (
+                    <div key={criterion.label} className="flex items-center gap-2">
+                      <PasswordCheckIcon status={criterion.status} />
+                      <span
+                        className={`text-xs ${
+                          criterion.status === 'ok'
+                            ? 'text-emerald-500'
+                            : criterion.status === 'error'
+                              ? 'text-rose-500'
+                              : isDark
+                                ? 'text-slate-400'
+                                : 'text-slate-500'
+                        }`}
+                      >
+                        {criterion.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {passwordError ? <p className="text-sm text-rose-500">{passwordError}</p> : null}
+              {passwordSuccess ? <p className="text-sm text-emerald-500">{passwordSuccess}</p> : null}
+
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                  onClick={() => setShowPasswordModal(false)}
+                  className={`rounded-xl border px-4 py-2 text-sm font-semibold ${
                     isDark
                       ? 'border-slate-700 text-slate-200 hover:bg-slate-800'
                       : 'border-slate-300 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  Sair
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {passwordLoading ? 'Salvando...' : 'Atualizar senha'}
                 </button>
               </div>
-            </div>
-          </header>
-
-          <section className="space-y-4 p-6">{children({ isDark, palette, currentUser, isAdmin })}</section>
-        </main>
-      </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

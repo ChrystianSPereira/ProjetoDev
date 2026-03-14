@@ -1,4 +1,4 @@
-﻿"""Support endpoints for sectors, document types, and users."""
+"""Support endpoints for sectors, document types, and users."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
@@ -26,39 +26,22 @@ from ..schemas.management import (
 router = APIRouter(tags=["management"], responses=DEFAULT_ERROR_RESPONSES)
 
 
-def _is_admin(user: User) -> bool:
-    return user.role == UserRole.ADMINISTRADOR
-
-
 def _require_management_access(user: User) -> None:
-    """Allow management actions for coordinator or administrator."""
-    if user.role not in (UserRole.COORDENADOR, UserRole.ADMINISTRADOR):
+    """Allow management actions only for administrator."""
+    if user.role != UserRole.ADMINISTRADOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Somente coordenador/admin pode realizar esta acao.",
+            detail="Somente administrador pode realizar esta acao.",
         )
 
 
 def _require_can_assign_admin(current_user: User, target_role: UserRole | None) -> None:
     """Only administrators can create/promote users to administrator role."""
-    if target_role == UserRole.ADMINISTRADOR and not _is_admin(current_user):
+    if target_role == UserRole.ADMINISTRADOR and current_user.role != UserRole.ADMINISTRADOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Somente administrador pode atribuir perfil ADMINISTRADOR.",
         )
-
-
-def _get_user_from_sector(db: Session, user_id: int, sector_id: int) -> User:
-    """Load user constrained by sector boundary."""
-    user = (
-        db.query(User)
-        .filter(User.id == user_id)
-        .filter(User.sector_id == sector_id)
-        .first()
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
-    return user
 
 
 def _get_user_by_id(db: Session, user_id: int) -> User:
@@ -84,7 +67,7 @@ def create_sector(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Sector:
-    """Create a new sector (coordinator/admin)."""
+    """Create a new sector (administrator only)."""
     _require_management_access(current_user)
 
     sector = Sector(name=payload.name.strip())
@@ -119,7 +102,7 @@ def create_document_type(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DocumentType:
-    """Create a new document type (coordinator/admin)."""
+    """Create a new document type (administrator only)."""
     _require_management_access(current_user)
 
     doc_type = DocumentType(name=payload.name.strip())
@@ -145,16 +128,13 @@ def list_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> UserListResponse:
-    """List users respecting coordinator sector boundaries and admin global scope."""
+    """List users for administrator scope."""
     _require_management_access(current_user)
 
     query = db.query(User)
 
-    if _is_admin(current_user):
-        if sector_id is not None:
-            query = query.filter(User.sector_id == sector_id)
-    else:
-        query = query.filter(User.sector_id == current_user.sector_id)
+    if sector_id is not None:
+        query = query.filter(User.sector_id == sector_id)
 
     if q:
         pattern = f"%{q}%"
@@ -175,17 +155,11 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Create user with sector and role segregation rules."""
+    """Create user with role constraints controlled by administrator."""
     _require_management_access(current_user)
     _require_can_assign_admin(current_user, payload.role)
 
     target_sector_id = payload.sector_id or current_user.sector_id
-
-    if not _is_admin(current_user) and target_sector_id != current_user.sector_id:
-        raise HTTPException(
-            status_code=403,
-            detail="Coordenador so pode criar usuarios no proprio setor.",
-        )
 
     sector = db.query(Sector).filter(Sector.id == target_sector_id).first()
     if not sector:
@@ -217,22 +191,11 @@ def update_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> User:
-    """Update user data with profile and multi-sector constraints."""
+    """Update user data with profile constraints."""
     _require_management_access(current_user)
     _require_can_assign_admin(current_user, payload.role)
 
-    if _is_admin(current_user):
-        target_user = _get_user_by_id(db, user_id=user_id)
-    else:
-        target_user = _get_user_from_sector(
-            db, user_id=user_id, sector_id=current_user.sector_id
-        )
-
-        if target_user.role == UserRole.ADMINISTRADOR:
-            raise HTTPException(
-                status_code=403,
-                detail="Coordenador nao pode alterar administrador.",
-            )
+    target_user = _get_user_by_id(db, user_id=user_id)
 
     if payload.name is not None:
         value = payload.name.strip()
@@ -268,7 +231,7 @@ def delete_user(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Response:
-    """Delete user with sector/admin safeguards."""
+    """Delete user with administrator safeguards."""
     _require_management_access(current_user)
 
     if current_user.id == user_id:
@@ -276,19 +239,7 @@ def delete_user(
             status_code=400, detail="Nao e permitido excluir o proprio usuario."
         )
 
-    if _is_admin(current_user):
-        target_user = _get_user_by_id(db, user_id=user_id)
-    else:
-        target_user = _get_user_from_sector(
-            db, user_id=user_id, sector_id=current_user.sector_id
-        )
-
-        if target_user.role == UserRole.ADMINISTRADOR:
-            raise HTTPException(
-                status_code=403,
-                detail="Coordenador nao pode excluir administrador.",
-            )
-
+    target_user = _get_user_by_id(db, user_id=user_id)
     db.delete(target_user)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
