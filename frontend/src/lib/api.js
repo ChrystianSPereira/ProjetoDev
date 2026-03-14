@@ -62,6 +62,59 @@ export async function listSectorsRequest(token) {
   return data
 }
 
+
+export async function createSectorRequest(token, payload) {
+  const response = await fetch(`${API_BASE}/sectors`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao criar setor.'))
+  }
+
+  return data
+}
+
+export async function updateSectorRequest(token, sectorId, payload) {
+  const response = await fetch(`${API_BASE}/sectors/${sectorId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await parseJson(response)
+
+  if (!response.ok) {
+    throw new Error(buildMessage(data, 'Falha ao atualizar setor.'))
+  }
+
+  return data
+}
+
+export async function deleteSectorRequest(token, sectorId) {
+  const response = await fetch(`${API_BASE}/sectors/${sectorId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const data = await parseJson(response)
+    throw new Error(buildMessage(data, 'Falha ao excluir setor.'))
+  }
+}
+
 export async function listDocumentTypesRequest(token) {
   const response = await fetch(`${API_BASE}/document-types`, {
     headers: {

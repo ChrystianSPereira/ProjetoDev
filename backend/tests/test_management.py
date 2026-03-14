@@ -93,3 +93,19 @@ def test_management_list_users_admin_scope_only(
     coord_response = client.get("/users", headers=coord_headers)
     assert coord_response.status_code == 403
     assert coord_response.json()["message"] == "Somente administrador pode realizar esta acao."
+
+
+def test_management_admin_can_update_user_sector(
+    client: TestClient, seeded_db: dict
+):
+    admin_headers = login_headers(client, seeded_db["admin"].email)
+
+    response = client.put(
+        f"/users/{seeded_db['author_a'].id}",
+        json={"sector_id": seeded_db["sector_b"].id},
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["sector_id"] == seeded_db["sector_b"].id
+

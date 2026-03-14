@@ -16,6 +16,38 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  }
+
+  *::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--scroll-track);
+    border: 1px solid var(--scroll-track-border);
+    border-radius: 999px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--scroll-thumb), var(--scroll-thumb-strong));
+    border-radius: 999px;
+    border: 2px solid var(--scroll-track);
+    box-shadow: 0 0 0 1px var(--scroll-thumb-outline);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--scroll-thumb-hover), var(--scroll-thumb-strong));
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
 }
 
 .theme-default {
@@ -58,6 +90,13 @@
   --button-2: #1e293b;
   --button-1-hover: #0c4a6e;
   --button-2-hover: #0f172a;
+
+  --scroll-track: rgba(203, 213, 225, 0.58);
+  --scroll-track-border: rgba(148, 163, 184, 0.7);
+  --scroll-thumb: rgba(51, 65, 85, 0.72);
+  --scroll-thumb-strong: rgba(30, 41, 59, 0.86);
+  --scroll-thumb-hover: rgba(3, 105, 161, 0.88);
+  --scroll-thumb-outline: rgba(15, 23, 42, 0.28);
 }
 
 .theme-corporate-dark {
@@ -100,4 +139,11 @@
   --button-2: #0f172a;
   --button-1-hover: #111827;
   --button-2-hover: #030712;
+
+  --scroll-track: rgba(15, 23, 42, 0.58);
+  --scroll-track-border: rgba(71, 85, 105, 0.72);
+  --scroll-thumb: rgba(148, 163, 184, 0.75);
+  --scroll-thumb-strong: rgba(203, 213, 225, 0.9);
+  --scroll-thumb-hover: rgba(125, 211, 252, 0.94);
+  --scroll-thumb-outline: rgba(2, 6, 23, 0.45);
 }

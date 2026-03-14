@@ -42,6 +42,7 @@ const EMPTY_FORM = {
   email: '',
   password: '',
   role: 'AUTOR',
+  sectorId: '',
 }
 
 function roleBadgeClass(role, isDark) {
@@ -179,6 +180,7 @@ export function UsersPage() {
       email: user.email,
       password: '',
       role: user.role,
+      sectorId: String(user.sector_id || ''),
     })
     setIsEditModalOpen(true)
   }
@@ -206,6 +208,7 @@ export function UsersPage() {
         email: createForm.email.trim(),
         password: createForm.password,
         role: createForm.role,
+        sector_id: Number(createForm.sectorId),
       })
 
       setFeedback('Usuario criado com sucesso.')
@@ -235,6 +238,7 @@ export function UsersPage() {
         name: editForm.name.trim(),
         email: editForm.email.trim(),
         role: editForm.role,
+        sector_id: Number(editForm.sectorId),
       }
 
       if (editForm.password.trim()) {
@@ -287,10 +291,16 @@ export function UsersPage() {
         const secondaryButtonClass = isDark
           ? 'h-9 rounded-xl border border-slate-700 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-800'
           : 'h-9 rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+        const fieldLabelClass = isDark
+          ? 'mb-1 block text-[11px] font-semibold tracking-[0.08em] text-slate-400 uppercase'
+          : 'mb-1 block text-[11px] font-semibold tracking-[0.08em] text-slate-500 uppercase'
         const availableRoles =
           currentUser?.role === 'ADMINISTRADOR'
             ? [...BASE_ROLES, 'ADMINISTRADOR']
             : BASE_ROLES
+        const sectorsList = Object.entries(sectorsById)
+          .map(([id, name]) => ({ id, name }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
 
         return (
           <>
@@ -301,7 +311,7 @@ export function UsersPage() {
             ) : (
               <>
                 <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-                  <form className="grid gap-2 md:grid-cols-[1fr_220px_auto_auto]" onSubmit={handleSearch}>
+                  <form className="grid gap-2 md:grid-cols-[1fr_220px_auto]" onSubmit={handleSearch}>
                     <input
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
@@ -330,13 +340,6 @@ export function UsersPage() {
                       Filtrar
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={openCreateModal}
-                      className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500"
-                    >
-                      Novo usuario
-                    </button>
                   </form>
                 </article>
 
@@ -353,24 +356,34 @@ export function UsersPage() {
                 ) : null}
 
                 <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-                  <h2 className="text-base font-semibold">Usuarios cadastrados</h2>
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="text-base font-semibold">Usuarios cadastrados</h2>
+                    <button
+                      type="button"
+                      onClick={openCreateModal}
+                      className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500"
+                    >
+                      Novo usuario
+                    </button>
+                  </div>
 
                   <div className="mt-3 overflow-x-auto">
                     <table className="min-w-full text-left text-xs">
                       <thead>
                         <tr className={palette.textSecondary}>
+                          <th className="px-2.5 py-2 font-semibold">ID</th>
                           <th className="px-2.5 py-2 font-semibold">Nome</th>
                           <th className="px-2.5 py-2 font-semibold">Email</th>
                           <th className="px-2.5 py-2 font-semibold">Perfil</th>
                           <th className="px-2.5 py-2 font-semibold">Setor</th>
-                          <th className="px-2.5 py-2 font-semibold">Acoes</th>
+                          <th className="px-2.5 py-2 text-right font-semibold">Acoes</th>
                         </tr>
                       </thead>
                       <tbody>
                         {loading
                           ? Array.from({ length: 8 }, (_, index) => (
                               <tr key={`users-skeleton-${index}`} className="border-t border-slate-700/40">
-                                {Array.from({ length: 5 }, (_, colIndex) => (
+                                {Array.from({ length: 6 }, (_, colIndex) => (
                                   <td key={`users-skeleton-${index}-${colIndex}`} className="px-2.5 py-2">
                                     <Skeleton isDark={isDark} className="h-4 w-full max-w-[140px]" />
                                   </td>
@@ -379,6 +392,11 @@ export function UsersPage() {
                             ))
                           : users.map((user) => (
                               <tr key={user.id} className="border-t border-slate-700/40">
+                                <td className="px-2.5 py-2">
+                                  <span className={`inline-flex rounded-md border px-2 py-1 ${isDark ? 'border-slate-700 bg-slate-950/60' : 'border-slate-200 bg-slate-50'}`}>
+                                    #{user.id}
+                                  </span>
+                                </td>
                                 <td className="px-2.5 py-2">{user.name}</td>
                                 <td className="px-2.5 py-2">{user.email}</td>
                                 <td className="px-2.5 py-2">
@@ -388,7 +406,7 @@ export function UsersPage() {
                                 </td>
                                 <td className="px-2.5 py-2">{sectorsById[user.sector_id] || `Setor ${user.sector_id}`}</td>
                                 <td className="px-2.5 py-2">
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center justify-end gap-2">
                                     <button type="button" onClick={() => openEditModal(user)} className={secondaryButtonClass}>
                                       Editar
                                     </button>
@@ -405,7 +423,7 @@ export function UsersPage() {
                             ))}
                         {!loading && users.length === 0 ? (
                           <tr>
-                            <td className={`px-2.5 py-5 text-center ${palette.textSecondary}`} colSpan={5}>
+                            <td className={`px-2.5 py-5 text-center ${palette.textSecondary}`} colSpan={6}>
                               Nenhum usuario encontrado.
                             </td>
                           </tr>
@@ -442,52 +460,109 @@ export function UsersPage() {
               </>
             )}
 
-            <Modal isOpen={isCreateModalOpen} title="Criar novo usuario" onClose={() => setIsCreateModalOpen(false)}>
-              <form className="grid gap-2 md:grid-cols-2" onSubmit={handleCreateSubmit}>
-                <input
-                  value={createForm.name}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
-                  placeholder="Nome completo"
-                  required
-                  className={inputClass}
-                />
-                <input
-                  type="email"
-                  value={createForm.email}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, email: event.target.value }))}
-                  placeholder="Email corporativo"
-                  required
-                  className={inputClass}
-                />
-                <input
-                  value={createForm.password}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, password: event.target.value }))}
-                  type="password"
-                  placeholder="Senha inicial"
-                  required
-                  minLength={6}
-                  className={inputClass}
-                />
-                <select
-                  value={createForm.role}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, role: event.target.value }))}
-                  className={selectClass}
-                  style={{ colorScheme: isDark ? 'dark' : 'light' }}
-                >
-                  {availableRoles.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+            <Modal
+              isOpen={isCreateModalOpen}
+              title="Criar novo usuario"
+              onClose={() => setIsCreateModalOpen(false)}
+            >
+              <p className={`mb-4 text-xs ${palette.textSecondary}`}>
+                Cadastre um usuario definindo perfil de acesso e setor responsavel.
+              </p>
 
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="md:col-span-2 h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {creating ? 'Criando...' : 'Criar usuario'}
-                </button>
+              <form className="space-y-4" onSubmit={handleCreateSubmit}>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="block">
+                    <span className={fieldLabelClass}>Nome completo</span>
+                    <input
+                      value={createForm.name}
+                      onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
+                      placeholder="Ex: Maria da Silva"
+                      required
+                      className={`${inputClass} w-full`}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className={fieldLabelClass}>Email corporativo</span>
+                    <input
+                      type="email"
+                      value={createForm.email}
+                      onChange={(event) => setCreateForm((prev) => ({ ...prev, email: event.target.value }))}
+                      placeholder="maria.silva@empresa.com"
+                      required
+                      className={`${inputClass} w-full`}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className={fieldLabelClass}>Senha inicial</span>
+                    <input
+                      value={createForm.password}
+                      onChange={(event) => setCreateForm((prev) => ({ ...prev, password: event.target.value }))}
+                      type="password"
+                      placeholder="Minimo 6 caracteres"
+                      required
+                      minLength={6}
+                      className={`${inputClass} w-full`}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className={fieldLabelClass}>Perfil</span>
+                    <select
+                      value={createForm.role}
+                      onChange={(event) => setCreateForm((prev) => ({ ...prev, role: event.target.value }))}
+                      className={`${selectClass} w-full`}
+                      style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                    >
+                      {availableRoles.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block md:col-span-2">
+                    <span className={fieldLabelClass}>Setor</span>
+                    <select
+                      value={createForm.sectorId}
+                      onChange={(event) => setCreateForm((prev) => ({ ...prev, sectorId: event.target.value }))}
+                      className={`${selectClass} w-full`}
+                      style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                      required
+                    >
+                      <option value="">Selecione o setor</option>
+                      {sectorsList.map((sector) => (
+                        <option key={sector.id} value={sector.id}>
+                          {sector.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className={`rounded-xl border p-3 text-[11px] ${isDark ? 'border-slate-700 bg-slate-950/70 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
+                  O usuario criado recebera as permissoes conforme o perfil selecionado e podera atuar no setor definido.
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className={secondaryButtonClass}
+                    disabled={creating}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {creating ? 'Criando...' : 'Criar usuario'}
+                  </button>
+                </div>
               </form>
             </Modal>
 
@@ -525,6 +600,20 @@ export function UsersPage() {
                   {availableRoles.map((option) => (
                     <option key={option} value={option}>
                       {option}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={editForm.sectorId}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, sectorId: event.target.value }))}
+                  className={selectClass}
+                  style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                  required
+                >
+                  <option value="">Selecione o setor</option>
+                  {sectorsList.map((sector) => (
+                    <option key={sector.id} value={sector.id}>
+                      {sector.name}
                     </option>
                   ))}
                 </select>

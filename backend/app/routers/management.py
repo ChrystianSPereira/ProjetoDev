@@ -17,6 +17,7 @@ from ..schemas.management import (
     DocumentTypeResponse,
     SectorCreateRequest,
     SectorResponse,
+    SectorUpdateRequest,
     UserCreateRequest,
     UserListResponse,
     UserResponse,
@@ -57,8 +58,8 @@ def list_sectors(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> list[Sector]:
-    """Return all registered sectors ordered by name."""
-    return db.query(Sector).order_by(Sector.name.asc()).all()
+    """Return all registered sectors ordered by creation id."""
+    return db.query(Sector).order_by(Sector.id.asc()).all()
 
 
 @router.post("/sectors", response_model=SectorResponse, status_code=status.HTTP_201_CREATED)
@@ -81,6 +82,61 @@ def create_sector(
 
     db.refresh(sector)
     return sector
+
+
+
+
+@router.put("/sectors/{sector_id}", response_model=SectorResponse)
+def update_sector(
+    sector_id: int,
+    payload: SectorUpdateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Sector:
+    """Update sector name (administrator only)."""
+    _require_management_access(current_user)
+
+    sector = db.query(Sector).filter(Sector.id == sector_id).first()
+    if not sector:
+        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+
+    sector.name = payload.name.strip()
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Setor ja existe.") from exc
+
+    db.refresh(sector)
+    return sector
+
+
+@router.delete("/sectors/{sector_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_sector(
+    sector_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    """Delete sector if it has no linked users/documents (administrator only)."""
+    _require_management_access(current_user)
+
+    sector = db.query(Sector).filter(Sector.id == sector_id).first()
+    if not sector:
+        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+
+    db.delete(sector)
+
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Setor possui vinculacoes e nao pode ser excluido.",
+        ) from exc
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/document-types", response_model=list[DocumentTypeResponse])
@@ -144,7 +200,7 @@ def list_users(
         query = query.filter(User.role == role)
 
     total = query.count()
-    items = query.order_by(User.name.asc()).offset(skip).limit(limit).all()
+    items = query.order_by(User.id.asc()).offset(skip).limit(limit).all()
 
     return UserListResponse(items=items, total=total, skip=skip, limit=limit)
 
@@ -211,6 +267,12 @@ def update_user(
 
     if payload.role is not None:
         target_user.role = payload.role
+
+    if payload.sector_id is not None:
+        sector = db.query(Sector).filter(Sector.id == payload.sector_id).first()
+        if not sector:
+            raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+        target_user.sector_id = payload.sector_id
 
     if payload.password is not None:
         target_user.password_hash = get_password_hash(payload.password)

@@ -16,6 +16,10 @@ class SectorResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SectorUpdateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
 class DocumentTypeCreateRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
 
@@ -40,6 +44,7 @@ class UserUpdateRequest(BaseModel):
     email: str | None = Field(default=None, min_length=5, max_length=255)
     password: str | None = Field(default=None, min_length=6, max_length=128)
     role: UserRole | None = None
+    sector_id: int | None = None
 
 
 class UserResponse(BaseModel):

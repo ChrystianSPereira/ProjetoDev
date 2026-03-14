@@ -7,6 +7,7 @@ import { DocumentCreatePage } from './pages/DocumentCreatePage'
 import { DocumentDetailPage } from './pages/DocumentDetailPage'
 import { DocumentsListPage } from './pages/DocumentsListPage'
 import { LoginPage } from './pages/LoginPage'
+import { SectorsPage } from './pages/SectorsPage'
 import { UsersPage } from './pages/UsersPage'
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/documentos/:documentId" element={<DocumentDetailPage />} />
         <Route path="/auditoria" element={<AuditPage />} />
         <Route path="/usuarios" element={<UsersPage />} />
+        <Route path="/setores" element={<SectorsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

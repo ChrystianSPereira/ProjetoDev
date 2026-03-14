@@ -55,6 +55,7 @@ function buildAdminMenu(role) {
   const items = []
 
   if (isAdminRole(role)) {
+    items.push({ key: 'setores', label: 'Setores da Empresa', path: '/setores' })
     items.push({ key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' })
   }
 
@@ -383,8 +384,8 @@ function handleLogout() {
   )
 
   return (
-    <div className={`theme-${theme} min-h-screen ${palette.page}`}>
-      <div className="flex min-h-screen">
+    <div className={`theme-${theme} h-screen overflow-hidden ${palette.page}`}>
+      <div className="flex h-full min-h-0">
         {mobileSidebarOpen ? (
           <button
             type="button"
@@ -397,7 +398,7 @@ function handleLogout() {
         <aside
           className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-slate-800 bg-slate-950 p-4 text-slate-100 transition-all duration-300 lg:static lg:z-0 lg:translate-x-0 ${
             mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} flex flex-col`}
+          } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'} flex flex-col overflow-hidden`}
         >
           <div className={`rounded-xl border border-slate-800 bg-slate-900 p-3 ${sidebarCollapsed ? 'lg:px-2' : ''}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center lg:justify-center' : 'gap-3'}`}>
@@ -413,7 +414,7 @@ function handleLogout() {
             </div>
           </div>
 
-          <div className="mt-6 flex-1 space-y-6">
+          <div className="mt-6 min-h-0 flex-1 space-y-6 overflow-y-auto pr-1 overscroll-contain">
             <div>
               <SectionTitle hidden={sidebarCollapsed}>Operacao</SectionTitle>
               <nav className="space-y-1">{renderMenu(operationMenu)}</nav>
@@ -485,7 +486,7 @@ function handleLogout() {
           </div>
         </aside>
 
-        <main className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <main className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <header className={`sticky top-0 z-10 border-b px-6 py-4 backdrop-blur ${palette.topbar}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -548,7 +549,7 @@ function handleLogout() {
             </div>
           </header>
 
-          <section className="space-y-4 p-6">
+          <section className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6 overscroll-contain">
             {children({
               isDark,
               palette,
