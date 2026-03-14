@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { AppShell } from '../components/layout/AppShell'
+import { Skeleton } from '../components/ui/Skeleton'
 import {
   DocumentForm,
   DocumentScopeBadge,
@@ -274,7 +275,38 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
   }
 
   if (loading) {
-    return <article className={panelClass}><p className={`text-xs ${palette.textSecondary}`}>Carregando detalhe...</p></article>
+    return (
+      <div className="space-y-4">
+        <article className={panelClass}>
+          <Skeleton isDark={isDark} className="h-3 w-24" />
+          <Skeleton isDark={isDark} className="mt-2 h-7 w-96 max-w-full" />
+          <Skeleton isDark={isDark} className="mt-2 h-3 w-72" />
+          <div className="mt-4 grid gap-2 md:grid-cols-3">
+            <Skeleton isDark={isDark} className="h-16 w-full" />
+            <Skeleton isDark={isDark} className="h-16 w-full" />
+            <Skeleton isDark={isDark} className="h-16 w-full" />
+          </div>
+        </article>
+
+        <article className={panelClass}>
+          <Skeleton isDark={isDark} className="h-5 w-44" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={`detail-version-skeleton-${i}`} isDark={isDark} className="h-8 w-full" />
+            ))}
+          </div>
+        </article>
+
+        <article className={panelClass}>
+          <Skeleton isDark={isDark} className="h-5 w-36" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Skeleton key={`detail-audit-skeleton-${i}`} isDark={isDark} className="h-8 w-full" />
+            ))}
+          </div>
+        </article>
+      </div>
+    )
   }
 
   if (!detail) {

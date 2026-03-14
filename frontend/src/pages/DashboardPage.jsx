@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import { listAuditLogsRequest, listDocumentsRequest } from '../lib/api'
 
@@ -64,7 +65,49 @@ function BarRow({ label, value, maxValue, colorClass, textSecondaryClass }) {
   )
 }
 
-function KpiCard({ title, value, subtitle, tone, panelClass, textSecondaryClass }) {
+
+function DocsActiveIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M6 3h8l4 4v14H6z" />
+      <path d="M14 3v5h5" />
+      <path d="m9 13 2 2 4-4" />
+    </svg>
+  )
+}
+
+function ReviewIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M3 12a9 9 0 1 0 9-9" />
+      <path d="M3 4v8h8" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  )
+}
+
+function DraftIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4 20h4l10.5-10.5a2.1 2.1 0 1 0-3-3L5 17v3z" />
+      <path d="m14 6 4 4" />
+    </svg>
+  )
+}
+
+function RateIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4 20V10" />
+      <path d="M10 20V6" />
+      <path d="M16 20v-8" />
+      <path d="M22 20v-4" />
+      <path d="m4 8 6-3 6 4 6-2" />
+    </svg>
+  )
+}
+
+function KpiCard({ title, value, subtitle, tone, panelClass, textSecondaryClass, icon }) {
   const toneClass =
     tone === 'success'
       ? 'text-emerald-500'
@@ -74,11 +117,28 @@ function KpiCard({ title, value, subtitle, tone, panelClass, textSecondaryClass 
           ? 'text-rose-500'
           : 'text-cyan-500'
 
+  const iconWrapClass =
+    tone === 'success'
+      ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
+      : tone === 'warning'
+        ? 'text-amber-300 bg-amber-500/10 border-amber-500/30'
+        : tone === 'danger'
+          ? 'text-rose-300 bg-rose-500/10 border-rose-500/30'
+          : 'text-cyan-300 bg-cyan-500/10 border-cyan-500/30'
+
   return (
-    <article className={`rounded-2xl border p-4 ${panelClass}`}>
-      <p className={`text-xs uppercase tracking-[0.06em] ${textSecondaryClass}`}>{title}</p>
-      <p className="mt-2 text-3xl font-bold">{value}</p>
-      <p className={`mt-2 text-xs ${toneClass}`}>{subtitle}</p>
+    <article className={`group relative overflow-hidden rounded-2xl border p-4 transition ${panelClass}`}>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-slate-500/10 blur-xl" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <p className={`text-xs uppercase tracking-[0.08em] ${textSecondaryClass}`}>{title}</p>
+          <p className="mt-2 text-3xl font-bold leading-none">{value}</p>
+        </div>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${iconWrapClass}`}>
+          {icon}
+        </div>
+      </div>
+      <p className={`relative mt-3 text-xs ${toneClass}`}>{subtitle}</p>
     </article>
   )
 }
@@ -269,9 +329,32 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
   if (loading) {
     return (
-      <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-        <p className={`text-sm ${palette.textSecondary}`}>Carregando indicadores...</p>
-      </article>
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <article key={`kpi-skeleton-${i}`} className={`rounded-2xl border p-4 ${palette.panel}`}>
+              <Skeleton isDark={isDark} className="h-3 w-28" />
+              <Skeleton isDark={isDark} className="mt-3 h-9 w-24" />
+              <Skeleton isDark={isDark} className="mt-3 h-3 w-40" />
+            </article>
+          ))}
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-2">
+          {Array.from({ length: 2 }, (_, i) => (
+            <article key={`chart-skeleton-${i}`} className={`rounded-2xl border p-4 ${palette.panel}`}>
+              <Skeleton isDark={isDark} className="h-5 w-44" />
+              <Skeleton isDark={isDark} className="mt-2 h-3 w-64" />
+              <div className="mt-4 space-y-3">
+                <Skeleton isDark={isDark} className="h-2.5 w-full" />
+                <Skeleton isDark={isDark} className="h-2.5 w-full" />
+                <Skeleton isDark={isDark} className="h-2.5 w-full" />
+                <Skeleton isDark={isDark} className="h-2.5 w-full" />
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     )
   }
 
@@ -283,12 +366,20 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         </article>
       ) : null}
 
+      <article className={`rounded-2xl border p-3 ${palette.panel}`}>
+        <div className="flex items-center justify-between gap-3">
+          <p className={`text-xs ${palette.textSecondary}`}>Visao consolidada do ciclo de vida documental e governanca.</p>
+          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
+        </div>
+      </article>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           title="Documentos vigentes"
           value={activeDocs.length}
           subtitle={`${computed.expiringSoon.length} vencendo nos proximos 30 dias`}
           tone="success"
+          icon={<DocsActiveIcon className="h-5 w-5" />}
           panelClass={palette.panel}
           textSecondaryClass={palette.textSecondary}
         />
@@ -297,6 +388,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
           value={inReviewDocs.length}
           subtitle="Aguardando validacao da coordenacao"
           tone="warning"
+          icon={<ReviewIcon className="h-5 w-5" />}
           panelClass={palette.panel}
           textSecondaryClass={palette.textSecondary}
         />
@@ -305,6 +397,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
           value={draftDocs.length}
           subtitle="Versoes em elaboracao"
           tone="info"
+          icon={<DraftIcon className="h-5 w-5" />}
           panelClass={palette.panel}
           textSecondaryClass={palette.textSecondary}
         />
@@ -313,6 +406,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
           value={computed.approvalRate === null ? '-' : `${computed.approvalRate}%`}
           subtitle={auditUnavailable ? 'Sem acesso aos logs de auditoria' : 'Base: aprovacoes x reprovacoes'}
           tone={computed.approvalRate !== null && computed.approvalRate >= 70 ? 'success' : 'warning'}
+          icon={<RateIcon className="h-5 w-5" />}
           panelClass={palette.panel}
           textSecondaryClass={palette.textSecondary}
         />

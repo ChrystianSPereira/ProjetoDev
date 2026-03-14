@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import { listAuditLogsRequest } from '../lib/api'
 
@@ -230,8 +231,6 @@ export function AuditPage() {
 
             <article className={`rounded-2xl border p-4 ${palette.panel}`}>
               <h2 className="text-base font-semibold">Eventos de auditoria</h2>
-              {loading ? <p className={`mt-3 text-xs ${palette.textSecondary}`}>Carregando...</p> : null}
-
               <div className="mt-3 overflow-x-auto">
                 <table className="min-w-full text-left text-xs">
                   <thead>
@@ -245,32 +244,42 @@ export function AuditPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id} className="border-t border-slate-700/40">
-                        <td className="px-2.5 py-2 whitespace-nowrap">
-                          {new Date(item.occurred_at).toLocaleString('pt-BR')}
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <span className={eventBadgeClass(item.event_type, isDark)}>{eventTypeLabel(item.event_type)}</span>
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <p className="font-semibold">{item.document_code}</p>
-                          <p className={palette.textSecondary}>{item.document_title}</p>
-                          <p className={palette.textSecondary}>v{item.version_number} (doc {item.document_id})</p>
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <span className={scopeBadgeClass(item.document_scope, isDark)}>{item.document_scope}</span>
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <p>de: {item.previous_status || '-'}</p>
-                          <p>para: {item.new_status || '-'}</p>
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <p>{item.actor_user_name}</p>
-                          <p className={palette.textSecondary}>ID {item.actor_user_id}</p>
-                        </td>
-                      </tr>
-                    ))}
+                    {loading
+                      ? Array.from({ length: 8 }, (_, index) => (
+                          <tr key={`audit-skeleton-${index}`} className="border-t border-slate-700/40">
+                            {Array.from({ length: 6 }, (_, colIndex) => (
+                              <td key={`audit-skeleton-${index}-${colIndex}`} className="px-2.5 py-2">
+                                <Skeleton isDark={isDark} className="h-4 w-full max-w-[160px]" />
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      : items.map((item) => (
+                          <tr key={item.id} className="border-t border-slate-700/40">
+                            <td className="px-2.5 py-2 whitespace-nowrap">
+                              {new Date(item.occurred_at).toLocaleString('pt-BR')}
+                            </td>
+                            <td className="px-2.5 py-2">
+                              <span className={eventBadgeClass(item.event_type, isDark)}>{eventTypeLabel(item.event_type)}</span>
+                            </td>
+                            <td className="px-2.5 py-2">
+                              <p className="font-semibold">{item.document_code}</p>
+                              <p className={palette.textSecondary}>{item.document_title}</p>
+                              <p className={palette.textSecondary}>v{item.version_number} (doc {item.document_id})</p>
+                            </td>
+                            <td className="px-2.5 py-2">
+                              <span className={scopeBadgeClass(item.document_scope, isDark)}>{item.document_scope}</span>
+                            </td>
+                            <td className="px-2.5 py-2">
+                              <p>de: {item.previous_status || '-'}</p>
+                              <p>para: {item.new_status || '-'}</p>
+                            </td>
+                            <td className="px-2.5 py-2">
+                              <p>{item.actor_user_name}</p>
+                              <p className={palette.textSecondary}>ID {item.actor_user_id}</p>
+                            </td>
+                          </tr>
+                        ))}
                     {!loading && items.length === 0 ? (
                       <tr>
                         <td className={`px-2.5 py-6 text-center ${palette.textSecondary}`} colSpan={6}>

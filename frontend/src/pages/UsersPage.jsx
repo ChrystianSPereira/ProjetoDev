@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import {
   createUserRequest,
@@ -354,8 +355,6 @@ export function UsersPage() {
                 <article className={`rounded-2xl border p-4 ${palette.panel}`}>
                   <h2 className="text-base font-semibold">Usuarios cadastrados</h2>
 
-                  {loading ? <p className={`mt-3 text-xs ${palette.textSecondary}`}>Carregando...</p> : null}
-
                   <div className="mt-3 overflow-x-auto">
                     <table className="min-w-full text-left text-xs">
                       <thead>
@@ -368,32 +367,42 @@ export function UsersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {users.map((user) => (
-                          <tr key={user.id} className="border-t border-slate-700/40">
-                            <td className="px-2.5 py-2">{user.name}</td>
-                            <td className="px-2.5 py-2">{user.email}</td>
-                            <td className="px-2.5 py-2">
-                              <span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${roleBadgeClass(user.role, isDark)}`}>
-                                {user.role}
-                              </span>
-                            </td>
-                            <td className="px-2.5 py-2">{sectorsById[user.sector_id] || `Setor ${user.sector_id}`}</td>
-                            <td className="px-2.5 py-2">
-                              <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => openEditModal(user)} className={secondaryButtonClass}>
-                                  Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setDeleteTarget(user)}
-                                  className="h-9 rounded-xl border border-rose-400/40 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10"
-                                >
-                                  Excluir
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {loading
+                          ? Array.from({ length: 8 }, (_, index) => (
+                              <tr key={`users-skeleton-${index}`} className="border-t border-slate-700/40">
+                                {Array.from({ length: 5 }, (_, colIndex) => (
+                                  <td key={`users-skeleton-${index}-${colIndex}`} className="px-2.5 py-2">
+                                    <Skeleton isDark={isDark} className="h-4 w-full max-w-[140px]" />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))
+                          : users.map((user) => (
+                              <tr key={user.id} className="border-t border-slate-700/40">
+                                <td className="px-2.5 py-2">{user.name}</td>
+                                <td className="px-2.5 py-2">{user.email}</td>
+                                <td className="px-2.5 py-2">
+                                  <span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold ${roleBadgeClass(user.role, isDark)}`}>
+                                    {user.role}
+                                  </span>
+                                </td>
+                                <td className="px-2.5 py-2">{sectorsById[user.sector_id] || `Setor ${user.sector_id}`}</td>
+                                <td className="px-2.5 py-2">
+                                  <div className="flex items-center gap-2">
+                                    <button type="button" onClick={() => openEditModal(user)} className={secondaryButtonClass}>
+                                      Editar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeleteTarget(user)}
+                                      className="h-9 rounded-xl border border-rose-400/40 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10"
+                                    >
+                                      Excluir
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
                         {!loading && users.length === 0 ? (
                           <tr>
                             <td className={`px-2.5 py-5 text-center ${palette.textSecondary}`} colSpan={5}>
