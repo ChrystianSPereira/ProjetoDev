@@ -357,6 +357,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
           documentTypes={metadata.documentTypes}
           inputClass={inputClass}
           selectClass={selectClass}
+          isDark={isDark}
           onChange={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
           onSubmit={(event) => {
             event.preventDefault()
@@ -516,6 +517,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
                 onSubmitReview={handleSubmitReviewFromModal}
                 disabled={creating}
                 isDark={isDark}
+                revisionMode={isRevisionModal}
               />
             </div>
           </div>
@@ -549,6 +551,14 @@ export function DocumentsListPage() {
     </AppShell>
   )
 }
+
+
+
+
+
+
+
+
 
 
 

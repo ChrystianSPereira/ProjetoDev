@@ -4,7 +4,6 @@ function validate(values) {
   const errors = {}
 
   if (!values.title.trim()) errors.title = 'Titulo obrigatorio.'
-  if (!values.code.trim()) errors.code = 'Codigo obrigatorio.'
   if (!values.sectorId) errors.sectorId = 'Selecione o setor.'
   if (!values.documentTypeId) errors.documentTypeId = 'Selecione o tipo documental.'
   if (!values.expirationDate) errors.expirationDate = 'Informe a data de vencimento.'
@@ -28,6 +27,7 @@ export function DocumentForm({
   disabled,
   disabledReason = '',
   isDark = true,
+  revisionMode = false,
 }) {
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState({})
@@ -89,7 +89,7 @@ export function DocumentForm({
   function buildPayload() {
     return {
       title: values.title.trim(),
-      code: values.code.trim(),
+      ...(values.code?.trim() ? { code: values.code.trim() } : {}),
       scope: values.scope,
       sector_id: Number(values.sectorId),
       document_type_id: Number(values.documentTypeId),
@@ -148,73 +148,64 @@ export function DocumentForm({
           {errors.title ? <p className="mt-1 text-[11px] text-rose-500">{errors.title}</p> : null}
         </div>
 
-        <div>
-          <label htmlFor="doc-code" className={labelClass}>Codigo</label>
-          <input
-            id="doc-code"
-            className={normalizedInputClass}
-            value={values.code}
-            onChange={(event) => setField('code', event.target.value)}
-            placeholder="Ex: POP-001"
-            disabled={disabled}
-          />
-          {errors.code ? <p className="mt-1 text-[11px] text-rose-500">{errors.code}</p> : null}
-        </div>
+        {!revisionMode ? (
+          <>
+            <div>
+              <label htmlFor="doc-scope" className={labelClass}>Abrangencia</label>
+              <select
+                id="doc-scope"
+                className={normalizedSelectClass}
+                value={values.scope}
+                onChange={(event) => setField('scope', event.target.value)}
+                style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                disabled={disabled}
+              >
+                <option value="LOCAL">Local (setor)</option>
+                <option value="CORPORATE">Corporativo</option>
+              </select>
+            </div>
 
-        <div>
-          <label htmlFor="doc-scope" className={labelClass}>Abrangencia</label>
-          <select
-            id="doc-scope"
-            className={normalizedSelectClass}
-            value={values.scope}
-            onChange={(event) => setField('scope', event.target.value)}
-            style={{ colorScheme: isDark ? 'dark' : 'light' }}
-            disabled={disabled}
-          >
-            <option value="LOCAL">Local (setor)</option>
-            <option value="CORPORATE">Corporativo</option>
-          </select>
-        </div>
+            <div>
+              <label htmlFor="doc-sector" className={labelClass}>Setor</label>
+              <select
+                id="doc-sector"
+                className={normalizedSelectClass}
+                value={values.sectorId}
+                onChange={(event) => setField('sectorId', event.target.value)}
+                style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                disabled={disabled}
+              >
+                <option value="">Selecione o setor</option>
+                {sectors.map((sector) => (
+                  <option key={sector.id} value={sector.id}>
+                    {sector.name}
+                  </option>
+                ))}
+              </select>
+              {errors.sectorId ? <p className="mt-1 text-[11px] text-rose-500">{errors.sectorId}</p> : null}
+            </div>
 
-        <div>
-          <label htmlFor="doc-sector" className={labelClass}>Setor</label>
-          <select
-            id="doc-sector"
-            className={normalizedSelectClass}
-            value={values.sectorId}
-            onChange={(event) => setField('sectorId', event.target.value)}
-            style={{ colorScheme: isDark ? 'dark' : 'light' }}
-            disabled={disabled}
-          >
-            <option value="">Selecione o setor</option>
-            {sectors.map((sector) => (
-              <option key={sector.id} value={sector.id}>
-                {sector.name}
-              </option>
-            ))}
-          </select>
-          {errors.sectorId ? <p className="mt-1 text-[11px] text-rose-500">{errors.sectorId}</p> : null}
-        </div>
-
-        <div>
-          <label htmlFor="doc-type" className={labelClass}>Tipo documental</label>
-          <select
-            id="doc-type"
-            className={normalizedSelectClass}
-            value={values.documentTypeId}
-            onChange={(event) => setField('documentTypeId', event.target.value)}
-            style={{ colorScheme: isDark ? 'dark' : 'light' }}
-            disabled={disabled}
-          >
-            <option value="">Selecione o tipo documental</option>
-            {documentTypes.map((documentType) => (
-              <option key={documentType.id} value={documentType.id}>
-                {documentType.name}
-              </option>
-            ))}
-          </select>
-          {errors.documentTypeId ? <p className="mt-1 text-[11px] text-rose-500">{errors.documentTypeId}</p> : null}
-        </div>
+            <div>
+              <label htmlFor="doc-type" className={labelClass}>Tipo documental</label>
+              <select
+                id="doc-type"
+                className={normalizedSelectClass}
+                value={values.documentTypeId}
+                onChange={(event) => setField('documentTypeId', event.target.value)}
+                style={{ colorScheme: isDark ? 'dark' : 'light' }}
+                disabled={disabled}
+              >
+                <option value="">Selecione o tipo documental</option>
+                {documentTypes.map((documentType) => (
+                  <option key={documentType.id} value={documentType.id}>
+                    {documentType.name}
+                  </option>
+                ))}
+              </select>
+              {errors.documentTypeId ? <p className="mt-1 text-[11px] text-rose-500">{errors.documentTypeId}</p> : null}
+            </div>
+          </>
+        ) : null}
 
         <div>
           <label htmlFor="doc-expiration" className={labelClass}>Data de vencimento</label>

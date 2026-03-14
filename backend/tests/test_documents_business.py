@@ -416,3 +416,29 @@ def test_admin_has_full_document_permissions(client: TestClient, seeded_db: dict
     )
     assert reject_resp.status_code == 200, reject_resp.text
     assert reject_resp.json()["status"] == "DRAFT"
+
+def test_auto_generates_document_code_when_code_not_informed(client: TestClient, seeded_db: dict):
+    author_headers = login_headers(client, seeded_db["author_a"].email)
+
+    draft_resp = client.post(
+        "/documents/drafts",
+        json={
+            "title": "Documento sem codigo manual",
+            "scope": "LOCAL",
+            "sector_id": seeded_db["sector_a"].id,
+            "document_type_id": seeded_db["doc_type"].id,
+            "expiration_date": seeded_db["default_expiration"],
+            "file_uri": "s3://bucket/sem-codigo.pdf",
+        },
+        headers=author_headers,
+    )
+    assert draft_resp.status_code == 201, draft_resp.text
+
+    draft = draft_resp.json()
+
+    detail_resp = client.get(f"/documents/{draft['document_id']}/detail", headers=author_headers)
+    assert detail_resp.status_code == 200, detail_resp.text
+
+    code = detail_resp.json()["code"]
+    assert code.startswith("DOC-")
+    assert len(code) >= 7

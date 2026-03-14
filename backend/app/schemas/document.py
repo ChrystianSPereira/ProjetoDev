@@ -8,7 +8,7 @@ from ..models.enums import AuditEventType, DocumentScope, DocumentStatus
 
 
 class DocumentDraftCreateRequest(BaseModel):
-    code: str = Field(min_length=1, max_length=50)
+    code: str | None = Field(default=None, min_length=1, max_length=50)
     title: str = Field(min_length=1, max_length=255)
     scope: DocumentScope
     sector_id: int
@@ -157,3 +157,4 @@ class DocumentDetailResponse(BaseModel):
     active_version_id: int | None
     versions: list[DocumentVersionDetailResponse]
     audits: list[DocumentAuditItemResponse]
+

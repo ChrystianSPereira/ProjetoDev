@@ -160,15 +160,19 @@ def create_draft(
     if not dtype_exists:
         raise HTTPException(status_code=404, detail="Tipo documental nao encontrado.")
 
-    document = (
-        db.query(Document)
-        .filter(Document.sector_id == payload.sector_id, Document.code == payload.code)
-        .first()
-    )
+    code_input = (payload.code or "").strip() or None
+
+    document = None
+    if code_input:
+        document = (
+            db.query(Document)
+            .filter(Document.sector_id == payload.sector_id, Document.code == code_input)
+            .first()
+        )
 
     if document is None:
         document = Document(
-            code=payload.code,
+            code=code_input or "TEMP",
             title=payload.title,
             scope=payload.scope,
             sector_id=payload.sector_id,
@@ -177,6 +181,9 @@ def create_draft(
         )
         db.add(document)
         db.flush()
+
+        if not code_input:
+            document.code = f"DOC-{document.id:03d}"
     else:
         document.title = payload.title
         document.scope = payload.scope
@@ -738,6 +745,8 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
+
+
 
 
 

@@ -4,6 +4,7 @@ export function DocumentsFilters({
   documentTypes,
   inputClass,
   selectClass,
+  isDark = false,
   onChange,
   onSubmit,
   onClear,
@@ -16,6 +17,14 @@ export function DocumentsFilters({
   ],
   statusDisabled = false,
 }) {
+  const clearButtonClass = isDark
+    ? 'h-10 rounded-xl border border-slate-600 bg-slate-900 px-4 text-xs font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60'
+    : 'h-10 rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/60'
+
+  const searchButtonClass = isDark
+    ? 'h-10 rounded-xl border border-emerald-500/40 bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
+    : 'h-10 rounded-xl border border-emerald-500/30 bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60'
+
   return (
     <form className="grid gap-2 md:grid-cols-[1fr_190px_190px_170px_170px_auto_auto]" onSubmit={onSubmit}>
       <input
@@ -77,14 +86,14 @@ export function DocumentsFilters({
       <button
         type="button"
         onClick={onClear}
-        className="h-10 rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+        className={clearButtonClass}
       >
         Limpar
       </button>
 
       <button
         type="submit"
-        className="h-10 rounded-xl bg-slate-900 px-4 text-xs font-semibold text-white transition hover:bg-slate-700"
+        className={searchButtonClass}
       >
         Buscar
       </button>

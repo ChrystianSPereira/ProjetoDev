@@ -23,7 +23,6 @@ function toActor(currentUser) {
 function buildInitialFormValues(actorSectorId) {
   return {
     title: '',
-    code: '',
     scope: 'LOCAL',
     sectorId: actorSectorId ? String(actorSectorId) : '',
     documentTypeId: '',
@@ -92,7 +91,6 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
 
         const values = {
           title: detail.title,
-          code: detail.code,
           scope: detail.scope,
           sectorId: String(detail.sector_id),
           documentTypeId: String(detail.document_type_id),
@@ -244,6 +242,7 @@ export function DocumentCreatePage() {
     </AppShell>
   )
 }
+
 
 
 

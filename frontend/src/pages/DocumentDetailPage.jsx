@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { AppShell } from '../components/layout/AppShell'
 import {
+  DocumentForm,
   DocumentScopeBadge,
   DocumentStatusBadge,
   RejectDialog,
@@ -10,7 +11,10 @@ import {
 import { getAccessToken } from '../features/auth/authStorage'
 import {
   approveVersionRequest,
+  createDraftRequest,
   getDocumentDetailRequest,
+  listDocumentTypesRequest,
+  listSectorsRequest,
   rejectVersionRequest,
   submitDraftRequest,
 } from '../lib/api'
@@ -34,6 +38,19 @@ function eventTypeLabel(eventType) {
   return labels[eventType] || eventType
 }
 
+function buildRevisionInitialValues(detail, activeVersion) {
+  return {
+    title: detail?.title || '',
+    code: detail?.code || '',
+    scope: detail?.scope || 'LOCAL',
+    sectorId: detail?.sector_id ? String(detail.sector_id) : '',
+    documentTypeId: detail?.document_type_id ? String(detail.document_type_id) : '',
+    expirationDate: activeVersion?.expiration_date || '',
+    fileName: activeVersion?.file_name || '',
+    fileUri: activeVersion?.file_uri || '',
+  }
+}
+
 function DocumentDetailContent({ palette, isDark, currentUser }) {
   const navigate = useNavigate()
   const { documentId } = useParams()
@@ -46,16 +63,41 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
   const [error, setError] = useState('')
   const [feedback, setFeedback] = useState('')
 
+  const [metadata, setMetadata] = useState({ sectors: [], documentTypes: [] })
+
   const [submittingVersionId, setSubmittingVersionId] = useState(null)
   const [approvingVersionId, setApprovingVersionId] = useState(null)
   const [rejectTarget, setRejectTarget] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
   const [rejecting, setRejecting] = useState(false)
 
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [createInitialValues, setCreateInitialValues] = useState(buildRevisionInitialValues(null, null))
+  const [createFormKey, setCreateFormKey] = useState('detail-revision-form-default')
+  const [creating, setCreating] = useState(false)
+
   const panelClass = `rounded-2xl border p-4 ${palette.panel}`
   const secondaryButtonClass = isDark
     ? 'h-9 rounded-xl border border-slate-700 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-800'
     : 'h-9 rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100'
+
+  const modalCardClass = isDark
+    ? 'relative z-10 w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-700 bg-slate-900/95 p-6 shadow-[0_45px_120px_-40px_rgba(2,6,23,0.95)] backdrop-blur'
+    : 'relative z-10 w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-[0_35px_80px_-35px_rgba(15,23,42,0.35)]'
+
+  const modalCloseClass = isDark
+    ? 'h-9 rounded-xl border border-slate-600 px-3 text-xs font-semibold text-slate-100 hover:bg-slate-800 disabled:opacity-60'
+    : 'h-9 rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60'
+
+  const modalBadgeClass = isDark
+    ? 'inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-amber-300 uppercase'
+    : 'inline-flex items-center rounded-full border border-amber-400/40 bg-amber-100 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-amber-700 uppercase'
+
+  const inputClass = isDark
+    ? 'h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
+    : 'h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 outline-none'
+
+  const selectClass = `${inputClass} appearance-none pr-9`
 
   const loadDetail = useCallback(async () => {
     if (!documentId) return
@@ -79,6 +121,26 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
   useEffect(() => {
     loadDetail()
   }, [loadDetail])
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) return
+
+    let isMounted = true
+
+    Promise.all([listSectorsRequest(token), listDocumentTypesRequest(token)])
+      .then(([sectors, documentTypes]) => {
+        if (!isMounted) return
+        setMetadata({ sectors, documentTypes })
+      })
+      .catch(() => {
+        if (!isMounted) return
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   function canSubmit(version) {
     if (version.status !== 'DRAFT') return false
@@ -154,6 +216,63 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
     }
   }
 
+  function openRevisionModal() {
+    if (!detail) return
+
+    const activeVersion = detail.versions.find((version) => version.id === detail.active_version_id) || detail.versions[0]
+    setCreateInitialValues(buildRevisionInitialValues(detail, activeVersion))
+    setCreateFormKey(`detail-revision-${detail.document_id}-${Date.now()}`)
+    setCreateModalOpen(true)
+  }
+
+  function closeRevisionModal() {
+    if (creating) return
+    setCreateModalOpen(false)
+  }
+
+  async function handleSaveDraftFromModal(payload) {
+    const token = getAccessToken()
+    if (!token) return
+
+    try {
+      setCreating(true)
+      setError('')
+      setFeedback('')
+
+      await createDraftRequest(token, payload)
+
+      setCreateModalOpen(false)
+      setFeedback('Nova versao em rascunho criada com sucesso.')
+      await loadDetail()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar nova versao em rascunho.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleSubmitReviewFromModal(payload) {
+    const token = getAccessToken()
+    if (!token) return
+
+    try {
+      setCreating(true)
+      setError('')
+      setFeedback('')
+
+      const created = await createDraftRequest(token, payload)
+      await submitDraftRequest(token, created.id)
+
+      setCreateModalOpen(false)
+      setFeedback('Nova versao criada e enviada para revisao com sucesso.')
+      await loadDetail()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao criar e submeter nova versao.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   if (loading) {
     return <article className={panelClass}><p className={`text-xs ${palette.textSecondary}`}>Carregando detalhe...</p></article>
   }
@@ -214,15 +333,6 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => navigate('/documentos')} className={secondaryButtonClass}>Voltar</button>
-          {canCreateRevision() ? (
-            <button
-              type="button"
-              onClick={() => navigate(`/documentos/novo?from=${detail.document_id}`)}
-              className="h-9 rounded-xl bg-amber-500 px-3 text-xs font-semibold text-slate-900 hover:bg-amber-400"
-            >
-              Criar nova versao em rascunho
-            </button>
-          ) : null}
         </div>
       </article>
 
@@ -235,7 +345,18 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       ) : null}
 
       <article className={panelClass}>
-        <h3 className="mb-3 text-base font-semibold">Historico de versoes</h3>
+                <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold">Historico de versoes</h3>
+          {canCreateRevision() ? (
+            <button
+              type="button"
+              onClick={openRevisionModal}
+              className="h-9 rounded-xl bg-amber-500 px-3 text-xs font-semibold text-slate-900 hover:bg-amber-400"
+            >
+              Criar nova versao em rascunho
+            </button>
+          ) : null}
+        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-xs">
@@ -350,6 +471,54 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
         </div>
       </article>
 
+      {createModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+          <button
+            type="button"
+            aria-label="Fechar modal"
+            className="absolute inset-0 bg-slate-950/75 backdrop-blur-[1px]"
+            onClick={closeRevisionModal}
+          />
+
+          <div className={modalCardClass}>
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-700/40 pb-4">
+              <div>
+                <span className={modalBadgeClass}>Versionamento</span>
+                <h3 className="mt-2 text-xl font-semibold">Nova versao do documento</h3>
+                <p className={`mt-1 text-sm ${palette.textSecondary}`}>
+                  Ajuste os dados necessarios e salve uma nova versao sem sobrescrever a vigente.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeRevisionModal}
+                disabled={creating}
+                className={modalCloseClass}
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-5 max-h-[68vh] overflow-y-auto pr-1">
+              <DocumentForm
+                key={createFormKey}
+                initialValues={createInitialValues}
+                sectors={metadata.sectors}
+                documentTypes={metadata.documentTypes}
+                inputClass={inputClass}
+                selectClass={selectClass}
+                onSaveDraft={handleSaveDraftFromModal}
+                onSubmitReview={handleSubmitReviewFromModal}
+                disabled={creating}
+                isDark={isDark}
+                revisionMode
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <RejectDialog
         open={!!rejectTarget}
         reason={rejectReason}
@@ -377,7 +546,6 @@ export function DocumentDetailPage() {
     </AppShell>
   )
 }
-
 
 
 
