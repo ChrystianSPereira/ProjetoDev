@@ -146,13 +146,14 @@ def create_draft(
     """Create a draft version for a document identity in the user's sector."""
     _require_roles(current_user, UserRole.AUTOR, UserRole.ADMINISTRADOR)
 
-    if current_user.role != UserRole.ADMINISTRADOR and payload.scope == DocumentScope.LOCAL and payload.sector_id != current_user.sector_id:
+    target_sector_id = current_user.sector_id
+    if not target_sector_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Documento local deve ser criado no setor do usuario.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Operacao nao disponivel no momento.",
         )
 
-    sector_exists = db.query(Sector.id).filter(Sector.id == payload.sector_id).first()
+    sector_exists = db.query(Sector.id).filter(Sector.id == target_sector_id).first()
     if not sector_exists:
         raise HTTPException(status_code=404, detail="Setor nao encontrado.")
 
@@ -166,7 +167,7 @@ def create_draft(
     if code_input:
         document = (
             db.query(Document)
-            .filter(Document.sector_id == payload.sector_id, Document.code == code_input)
+            .filter(Document.sector_id == target_sector_id, Document.code == code_input)
             .first()
         )
 
@@ -175,7 +176,7 @@ def create_draft(
             code=code_input or "TEMP",
             title=payload.title,
             scope=payload.scope,
-            sector_id=payload.sector_id,
+            sector_id=target_sector_id,
             document_type_id=payload.document_type_id,
             created_by_user_id=current_user.id,
         )
@@ -745,11 +746,3 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
-
-
-
-
-
-
-
-

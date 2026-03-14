@@ -11,7 +11,7 @@ class DocumentDraftCreateRequest(BaseModel):
     code: str | None = Field(default=None, min_length=1, max_length=50)
     title: str = Field(min_length=1, max_length=255)
     scope: DocumentScope
-    sector_id: int
+    sector_id: int | None = None
     document_type_id: int
     expiration_date: date
     file_uri: str = Field(min_length=1, max_length=500)

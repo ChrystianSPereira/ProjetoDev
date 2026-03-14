@@ -4,7 +4,6 @@ function validate(values) {
   const errors = {}
 
   if (!values.title.trim()) errors.title = 'Titulo obrigatorio.'
-  if (!values.sectorId) errors.sectorId = 'Selecione o setor.'
   if (!values.documentTypeId) errors.documentTypeId = 'Selecione o tipo documental.'
   if (!values.expirationDate) errors.expirationDate = 'Informe a data de vencimento.'
   if (!values.fileName.trim()) errors.fileName = 'Selecione um arquivo para upload.'
@@ -18,7 +17,6 @@ function ensureFullWidthClass(baseClass) {
 
 export function DocumentForm({
   initialValues,
-  sectors,
   documentTypes,
   inputClass,
   selectClass,
@@ -91,7 +89,6 @@ export function DocumentForm({
       title: values.title.trim(),
       ...(values.code?.trim() ? { code: values.code.trim() } : {}),
       scope: values.scope,
-      sector_id: Number(values.sectorId),
       document_type_id: Number(values.documentTypeId),
       expiration_date: values.expirationDate,
       file_uri: values.fileUri.trim() || `/uploads/${values.fileName.trim()}`,
@@ -163,26 +160,6 @@ export function DocumentForm({
                 <option value="LOCAL">Local (setor)</option>
                 <option value="CORPORATE">Corporativo</option>
               </select>
-            </div>
-
-            <div>
-              <label htmlFor="doc-sector" className={labelClass}>Setor</label>
-              <select
-                id="doc-sector"
-                className={normalizedSelectClass}
-                value={values.sectorId}
-                onChange={(event) => setField('sectorId', event.target.value)}
-                style={{ colorScheme: isDark ? 'dark' : 'light' }}
-                disabled={disabled}
-              >
-                <option value="">Selecione o setor</option>
-                {sectors.map((sector) => (
-                  <option key={sector.id} value={sector.id}>
-                    {sector.name}
-                  </option>
-                ))}
-              </select>
-              {errors.sectorId ? <p className="mt-1 text-[11px] text-rose-500">{errors.sectorId}</p> : null}
             </div>
 
             <div>
