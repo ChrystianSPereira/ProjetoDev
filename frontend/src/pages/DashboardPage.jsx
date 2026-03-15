@@ -25,6 +25,18 @@ function daysUntil(dateText) {
   return Math.floor(diffMs / 86400000)
 }
 
+function daysSince(dateText) {
+  const target = toDate(dateText)
+  if (!target) return null
+
+  const now = new Date()
+  const current = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const past = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+
+  const diffMs = current.getTime() - past.getTime()
+  return Math.floor(diffMs / 86400000)
+}
+
 async function fetchAllPages(fetchPage) {
   let skip = 0
   let total = 0
@@ -64,7 +76,6 @@ function BarRow({ label, value, maxValue, colorClass, textSecondaryClass }) {
     </div>
   )
 }
-
 
 function DocsActiveIcon({ className = '' }) {
   return (
@@ -215,6 +226,8 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
   }, [loadDashboard])
 
   const computed = useMemo(() => {
+    const allDocs = [...activeDocs, ...inReviewDocs, ...draftDocs, ...obsoleteDocs]
+
     const expiringSoon = activeDocs.filter((doc) => {
       const days = daysUntil(doc.expiration_date)
       return days !== null && days >= 0 && days <= 30
@@ -248,7 +261,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         colorClass: 'bg-rose-500',
       },
       {
-        label: 'Ate 30 dias',
+        label: 'Até 30 dias',
         value: expiringSoon.length,
         colorClass: 'bg-amber-500',
       },
@@ -308,6 +321,115 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
       ? Math.round((approvedTotal / (approvedTotal + rejectedTotal)) * 100)
       : null
 
+    const auditDocs = new Set(auditItems.map((item) => Number(item.document_id)).filter((id) => Number.isFinite(id)))
+    const sectorsMap = new Map()
+
+    for (const doc of allDocs) {
+      const sectorId = Number(doc.sector_id || 0)
+      const sectorName = doc.sector_name || `Setor ${sectorId}`
+
+      if (!sectorsMap.has(sectorId)) {
+        sectorsMap.set(sectorId, {
+          sectorId,
+          sectorName,
+          totalDocs: 0,
+          activeCount: 0,
+          activeOnTime: 0,
+          expiringSoon: 0,
+          inReviewCount: 0,
+          inReviewOverdue: 0,
+          docsWithAudit: 0,
+        })
+      }
+
+      const bucket = sectorsMap.get(sectorId)
+      bucket.totalDocs += 1
+
+      if (doc.status === 'ACTIVE') {
+        bucket.activeCount += 1
+        const dueDays = daysUntil(doc.expiration_date)
+        if (dueDays !== null && dueDays >= 0) bucket.activeOnTime += 1
+        if (dueDays !== null && dueDays >= 0 && dueDays <= 30) bucket.expiringSoon += 1
+      }
+
+      if (doc.status === 'IN_REVIEW') {
+        bucket.inReviewCount += 1
+        const pendingDays = daysSince(doc.submitted_at || doc.updated_at || doc.created_at)
+        if (pendingDays !== null && pendingDays > 7) bucket.inReviewOverdue += 1
+      }
+
+      if (auditDocs.has(Number(doc.document_id))) {
+        bucket.docsWithAudit += 1
+      }
+    }
+
+    const complianceBySector = Array.from(sectorsMap.values())
+      .map((item) => {
+        const onTimeRate = item.activeCount > 0 ? item.activeOnTime / item.activeCount : 1
+        const reviewHealth = item.inReviewCount > 0 ? 1 - item.inReviewOverdue / item.inReviewCount : 1
+        const expirationHealth = item.activeCount > 0 ? 1 - item.expiringSoon / item.activeCount : 1
+        const auditRate = item.totalDocs > 0 ? item.docsWithAudit / item.totalDocs : 1
+
+        const score = Math.round(
+          (onTimeRate * 0.4 + reviewHealth * 0.2 + expirationHealth * 0.2 + auditRate * 0.2) * 100,
+        )
+
+        return {
+          ...item,
+          onTimeRate,
+          reviewHealth,
+          expirationHealth,
+          auditRate,
+          score,
+        }
+      })
+      .sort((a, b) => b.score - a.score)
+
+    const topRisks = allDocs
+      .map((doc) => {
+        if (doc.status === 'ACTIVE') {
+          const dueIn = daysUntil(doc.expiration_date)
+
+          if (dueIn !== null && dueIn < 0) {
+            return {
+              key: `${doc.document_id}-${doc.version_id}-overdue`,
+              title: doc.title,
+              sectorName: doc.sector_name || '-',
+              reason: `Vencido há ${Math.abs(dueIn)} dias`,
+              severity: 100,
+            }
+          }
+
+          if (dueIn !== null && dueIn <= 15) {
+            return {
+              key: `${doc.document_id}-${doc.version_id}-expiring`,
+              title: doc.title,
+              sectorName: doc.sector_name || '-',
+              reason: `Vence em ${dueIn} dias`,
+              severity: 75 - dueIn,
+            }
+          }
+        }
+
+        if (doc.status === 'IN_REVIEW') {
+          const pendingDays = daysSince(doc.submitted_at || doc.updated_at || doc.created_at)
+          if (pendingDays !== null && pendingDays > 7) {
+            return {
+              key: `${doc.document_id}-${doc.version_id}-review`,
+              title: doc.title,
+              sectorName: doc.sector_name || '-',
+              reason: `Em revisão há ${pendingDays} dias`,
+              severity: Math.min(95, 50 + pendingDays),
+            }
+          }
+        }
+
+        return null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.severity - a.severity)
+      .slice(0, 8)
+
     return {
       expiringSoon,
       overdue,
@@ -319,6 +441,8 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
       approvedTotal,
       rejectedTotal,
       approvalRate,
+      complianceBySector,
+      topRisks,
     }
   }, [activeDocs, inReviewDocs, draftDocs, obsoleteDocs, auditItems])
 
@@ -368,7 +492,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
       <article className={`rounded-2xl border p-3 ${palette.panel}`}>
         <div className="flex items-center justify-between gap-3">
-          <p className={`text-xs ${palette.textSecondary}`}>Visao consolidada do ciclo de vida documental e governanca.</p>
+          <p className={`text-xs ${palette.textSecondary}`}>Visão consolidada do ciclo de vida documental e governança.</p>
           <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
         </div>
       </article>
@@ -377,7 +501,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         <KpiCard
           title="Documentos vigentes"
           value={activeDocs.length}
-          subtitle={`${computed.expiringSoon.length} vencendo nos proximos 30 dias`}
+          subtitle={`${computed.expiringSoon.length} vencendo nos próximos 30 dias`}
           tone="success"
           icon={<DocsActiveIcon className="h-5 w-5" />}
           panelClass={palette.panel}
@@ -414,7 +538,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-          <h2 className="text-base font-semibold">Distribuicao por status</h2>
+          <h2 className="text-base font-semibold">Distribuição por status</h2>
           <p className={`mt-1 text-xs ${palette.textSecondary}`}>Panorama atual do ciclo de vida documental.</p>
           <div className="mt-4 space-y-3">
             {computed.statusCounts.map((item) => (
@@ -431,7 +555,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         </article>
 
         <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-          <h2 className="text-base font-semibold">Abrangencia vigente</h2>
+          <h2 className="text-base font-semibold">Abrangência vigente</h2>
           <p className={`mt-1 text-xs ${palette.textSecondary}`}>Comparativo entre documentos Corporativos e Locais vigentes.</p>
           <div className="mt-4 space-y-3">
             <BarRow
@@ -448,6 +572,73 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
               colorClass="bg-indigo-500"
               textSecondaryClass={palette.textSecondary}
             />
+          </div>
+        </article>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <article className={`rounded-2xl border p-4 ${palette.panel}`}>
+          <h2 className="text-base font-semibold">Compliance por setor</h2>
+          <p className={`mt-1 text-xs ${palette.textSecondary}`}>
+            Score de conformidade considerando prazo, revisão pendente, risco de vencimento e cobertura de auditoria.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {computed.complianceBySector.length === 0 ? (
+              <p className={`text-xs ${palette.textSecondary}`}>Sem dados suficientes para calcular compliance.</p>
+            ) : (
+              computed.complianceBySector.slice(0, 6).map((sector) => {
+                const scoreClass =
+                  sector.score >= 85
+                    ? 'text-emerald-400'
+                    : sector.score >= 70
+                      ? 'text-amber-400'
+                      : 'text-rose-400'
+
+                return (
+                  <div key={sector.sectorId} className="rounded-xl border border-slate-700/30 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold">{sector.sectorName}</p>
+                        <p className={`text-[11px] ${palette.textSecondary}`}>
+                          Vigentes no prazo: {Math.round(sector.onTimeRate * 100)}% | Auditoria: {Math.round(sector.auditRate * 100)}%
+                        </p>
+                      </div>
+                      <p className={`text-lg font-bold ${scoreClass}`}>{sector.score}</p>
+                    </div>
+                    <div className="mt-2 h-2 rounded-full bg-slate-800/40">
+                      <div className="h-full rounded-full bg-cyan-500" style={{ width: `${Math.max(sector.score, 6)}%` }} />
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </article>
+
+        <article className={`rounded-2xl border p-4 ${palette.panel}`}>
+          <h2 className="text-base font-semibold">Top riscos de compliance</h2>
+          <p className={`mt-1 text-xs ${palette.textSecondary}`}>
+            Priorize os documentos abaixo para reduzir risco operacional e regulatório.
+          </p>
+
+          <div className="mt-4 space-y-2">
+            {computed.topRisks.length === 0 ? (
+              <p className={`text-xs ${palette.textSecondary}`}>Nenhum risco crítico detectado no momento.</p>
+            ) : (
+              computed.topRisks.map((risk) => (
+                <div key={risk.key} className="flex items-center justify-between gap-3 rounded-xl border border-slate-700/30 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold">{risk.title}</p>
+                    <p className={`text-[11px] ${palette.textSecondary}`}>{risk.sectorName}</p>
+                    <p className="text-[11px] text-rose-400">{risk.reason}</p>
+                  </div>
+                  <span className="inline-flex rounded-full border border-rose-500/40 bg-rose-500/10 px-2 py-1 text-[10px] font-semibold text-rose-300">
+                    Risco {Math.min(99, Math.max(1, Math.round(risk.severity)))}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </article>
       </div>
@@ -472,11 +663,11 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
           <div className="mt-4 rounded-xl border border-slate-700/30 p-3">
             <p className={`text-xs font-semibold uppercase tracking-[0.06em] ${palette.textSecondary}`}>
-              Proximos vencimentos
+              Próximos vencimentos
             </p>
             <div className="mt-2 space-y-2 text-xs">
               {computed.soonList.length === 0 ? (
-                <p className={palette.textSecondary}>Nenhum documento vence nos proximos 30 dias.</p>
+                <p className={palette.textSecondary}>Nenhum documento vence nos próximos 30 dias.</p>
               ) : (
                 computed.soonList.map((doc) => (
                   <div key={`${doc.document_id}-${doc.version_id}`} className="flex items-center justify-between gap-3">
@@ -490,13 +681,13 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         </article>
 
         <article className={`rounded-2xl border p-4 ${palette.panel}`}>
-          <h2 className="text-base font-semibold">Tendencia de decisoes</h2>
-          <p className={`mt-1 text-xs ${palette.textSecondary}`}>Aprovações e reprovações por mes (ultimos 6 meses).</p>
+          <h2 className="text-base font-semibold">Tendência de decisões</h2>
+          <p className={`mt-1 text-xs ${palette.textSecondary}`}>Aprovações e reprovações por mês (últimos 6 meses).</p>
 
           {auditUnavailable ? (
             <div className="mt-4 rounded-xl border border-slate-700/30 p-3">
               <p className={`text-sm ${palette.textSecondary}`}>
-                Auditoria indisponivel para este perfil.
+                Auditoria indisponível para este perfil.
               </p>
             </div>
           ) : (
@@ -561,4 +752,3 @@ export function DashboardPage() {
     </AppShell>
   )
 }
-
