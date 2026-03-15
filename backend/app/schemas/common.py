@@ -16,3 +16,4 @@ class ErrorResponse(BaseModel):
     path: str
     timestamp: datetime
     details: list[dict] | dict | None = None
+

@@ -1,6 +1,6 @@
-const STATUS_LABELS = {
+﻿const STATUS_LABELS = {
   DRAFT: 'Rascunho',
-  IN_REVIEW: 'Em Revisao',
+  IN_REVIEW: 'Em Revisão',
   ACTIVE: 'Vigente',
   OBSOLETE: 'Obsoleto',
 }
@@ -36,3 +36,4 @@ export function DocumentStatusBadge({ status, isDark }) {
     </span>
   )
 }
+

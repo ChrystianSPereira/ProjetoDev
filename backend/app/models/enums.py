@@ -33,3 +33,4 @@ class AuditEventType(str, Enum):
     STATUS_CHANGED = "STATUS_CHANGED"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
+

@@ -1,4 +1,4 @@
-import { Skeleton } from '../../../components/ui/Skeleton'
+﻿import { Skeleton } from '../../../components/ui/Skeleton'
 import { DocumentScopeBadge } from './DocumentScopeBadge'
 import { DocumentStatusBadge } from './DocumentStatusBadge'
 
@@ -14,13 +14,13 @@ export function DocumentsTable({ rows, loading, isDark, textSecondaryClass, rend
             <th className="px-2.5 py-2 font-semibold">Setor</th>
             <th className="px-2.5 py-2 font-semibold">Tipo documental</th>
             <th className="px-2.5 py-2 font-semibold">Abrangencia</th>
-            <th className="px-2.5 py-2 font-semibold">Versao</th>
+            <th className="px-2.5 py-2 font-semibold">Versão</th>
             <th className="px-2.5 py-2 font-semibold">Status</th>
             <th className="px-2.5 py-2 font-semibold">Vencimento</th>
             <th className="px-2.5 py-2 font-semibold">Criado por</th>
             <th className="px-2.5 py-2 font-semibold">Aprovado por</th>
             <th className="px-2.5 py-2 font-semibold">Atualizado em</th>
-            <th className="px-2.5 py-2 font-semibold">Acoes</th>
+            <th className="px-2.5 py-2 font-semibold">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -65,3 +65,4 @@ export function DocumentsTable({ rows, loading, isDark, textSecondaryClass, rend
     </div>
   )
 }
+

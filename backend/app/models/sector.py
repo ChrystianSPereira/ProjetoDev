@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+﻿from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -13,3 +13,4 @@ class Sector(Base):
 
     users = relationship("User", back_populates="sector")
     documents = relationship("Document", back_populates="sector")
+

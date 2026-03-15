@@ -8,10 +8,10 @@ import { LoginCard } from '../components/auth/LoginCard'
 const HIGHLIGHTS = [
   {
     title: 'Versionamento controlado',
-    subtitle: 'Rascunho, revisao, vigente e obsoleto',
+    subtitle: 'Rascunho, revisão, vigente e obsoleto',
   },
   {
-    title: 'Aprovacao por alcada',
+    title: 'Aprovação por alcada',
     subtitle: 'Autor e coordenador por setor',
   },
   {
@@ -97,13 +97,13 @@ export function LoginPage() {
 
             <div className="mt-20 max-w-2xl lg:mt-28">
               <p className="text-(--panel-muted) text-xs font-semibold tracking-[0.16em] uppercase">
-                Gestao documental corporativa
+                Gestão documental corporativa
               </p>
               <h2 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">
                 Controle documental com rastreabilidade e conformidade.
               </h2>
               <p className="mt-6 max-w-xl text-(--panel-subtext) text-base sm:text-lg">
-                Centralize documentos por setor, controle versoes com ciclo de vida validado e
+                Centralize documentos por setor, controle versões com ciclo de vida validado e
                 garanta acesso seguro por perfil.
               </p>
             </div>
@@ -151,5 +151,6 @@ export function LoginPage() {
     </div>
   )
 }
+
 
 

@@ -1,4 +1,4 @@
-"""Authentication request/response schemas."""
+﻿"""Authentication request/response schemas."""
 
 from pydantic import BaseModel, Field
 
@@ -29,3 +29,4 @@ class ChangePasswordRequest(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str
+

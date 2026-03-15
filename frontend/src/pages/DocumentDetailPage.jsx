@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import { Skeleton } from '../components/ui/Skeleton'
 import {
   DocumentForm,
@@ -112,7 +113,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       setDetail(data)
       setError('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nao foi possivel carregar o detalhe do documento.')
+      setError(err instanceof Error ? err.message : 'Não foi possivel carregar o detalhe do documento.')
       setDetail(null)
     } finally {
       setLoading(false)
@@ -168,10 +169,10 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       setError('')
       setFeedback('')
       await submitDraftRequest(token, version.id)
-      setFeedback('Versao enviada para revisao com sucesso.')
+      setFeedback('Versão enviada para revisão com sucesso.')
       await loadDetail()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao submeter versao.')
+      setError(err instanceof Error ? err.message : 'Falha ao submeter versão.')
     } finally {
       setSubmittingVersionId(null)
     }
@@ -186,10 +187,10 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       setError('')
       setFeedback('')
       await approveVersionRequest(token, version.id)
-      setFeedback('Versao aprovada e publicada como vigente.')
+      setFeedback('Versão aprovada e publicada como vigente.')
       await loadDetail()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao aprovar versao.')
+      setError(err instanceof Error ? err.message : 'Falha ao aprovar versão.')
     } finally {
       setApprovingVersionId(null)
     }
@@ -206,12 +207,12 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       setError('')
       setFeedback('')
       await rejectVersionRequest(token, rejectTarget.id, rejectReason)
-      setFeedback('Versao reprovada e retornada para rascunho.')
+      setFeedback('Versão reprovada e retornada para rascunho.')
       setRejectTarget(null)
       setRejectReason('')
       await loadDetail()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao reprovar versao.')
+      setError(err instanceof Error ? err.message : 'Falha ao reprovar versão.')
     } finally {
       setRejecting(false)
     }
@@ -243,10 +244,10 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       await createDraftRequest(token, payload)
 
       setCreateModalOpen(false)
-      setFeedback('Nova versao em rascunho criada com sucesso.')
+      setFeedback('Nova versão em rascunho criada com sucesso.')
       await loadDetail()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar nova versao em rascunho.')
+      setError(err instanceof Error ? err.message : 'Falha ao criar nova versão em rascunho.')
     } finally {
       setCreating(false)
     }
@@ -265,10 +266,10 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
       await submitDraftRequest(token, created.id)
 
       setCreateModalOpen(false)
-      setFeedback('Nova versao criada e enviada para revisao com sucesso.')
+      setFeedback('Nova versão criada e enviada para revisão com sucesso.')
       await loadDetail()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar e submeter nova versao.')
+      setError(err instanceof Error ? err.message : 'Falha ao criar e submeter nova versão.')
     } finally {
       setCreating(false)
     }
@@ -312,7 +313,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
   if (!detail) {
     return (
       <article className={panelClass}>
-        <p className="text-sm text-rose-500">{error || 'Documento nao encontrado.'}</p>
+        <FeedbackBanner variant="error" message={error || 'Documento não encontrado.'} title="Falha ao abrir documento" />
         <Link to="/documentos" className="mt-3 inline-flex h-9 items-center rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-100">
           Voltar para listagem
         </Link>
@@ -347,7 +348,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
           </div>
 
           <div className="rounded-xl border border-slate-700/30 p-3">
-            <p className={`text-[11px] ${palette.textSecondary}`}>Ultima atualizacao</p>
+            <p className={`text-[11px] ${palette.textSecondary}`}>Ultima atualização</p>
             <p className="text-xs font-semibold">{new Date(detail.updated_at).toLocaleString('pt-BR')}</p>
           </div>
 
@@ -358,7 +359,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
                 {activeVersion.file_name}
               </a>
             ) : (
-              <p className="text-xs font-semibold">Sem versao vigente</p>
+              <p className="text-xs font-semibold">Sem versão vigente</p>
             )}
           </div>
         </div>
@@ -368,24 +369,30 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
         </div>
       </article>
 
-      {feedback ? (
-        <article className={panelClass}><p className="text-xs text-emerald-500">{feedback}</p></article>
-      ) : null}
+            <FeedbackBanner
+        variant="success"
+        message={feedback}
+        title="Operação concluida"
+        onClose={() => setFeedback('')}
+      />
 
-      {error ? (
-        <article className={panelClass}><p className="text-xs text-rose-500">{error}</p></article>
-      ) : null}
+      <FeedbackBanner
+        variant="error"
+        message={error}
+        title="Falha na operação"
+        onClose={() => setError('')}
+      />
 
       <article className={panelClass}>
                 <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className="text-base font-semibold">Historico de versoes</h3>
+          <h3 className="text-base font-semibold">Histórico de versões</h3>
           {canCreateRevision() ? (
             <button
               type="button"
               onClick={openRevisionModal}
               className="h-9 rounded-xl bg-amber-500 px-3 text-xs font-semibold text-slate-900 hover:bg-amber-400"
             >
-              Criar nova versao em rascunho
+              Criar nova versão em rascunho
             </button>
           ) : null}
         </div>
@@ -394,13 +401,13 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
           <table className="min-w-full text-left text-xs">
             <thead>
               <tr className={palette.textSecondary}>
-                <th className="px-2.5 py-2 font-semibold">Versao</th>
+                <th className="px-2.5 py-2 font-semibold">Versão</th>
                 <th className="px-2.5 py-2 font-semibold">Status</th>
                 <th className="px-2.5 py-2 font-semibold">Vencimento</th>
                 <th className="px-2.5 py-2 font-semibold">Arquivo</th>
                 <th className="px-2.5 py-2 font-semibold">Criado por</th>
                 <th className="px-2.5 py-2 font-semibold">Aprovado por</th>
-                <th className="px-2.5 py-2 font-semibold">Acoes</th>
+                <th className="px-2.5 py-2 font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -457,7 +464,7 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
               {detail.versions.length === 0 ? (
                 <tr>
                   <td className={`px-2.5 py-5 text-center ${palette.textSecondary}`} colSpan={7}>
-                    Nenhuma versao encontrada para este documento.
+                    Nenhuma versão encontrada para este documento.
                   </td>
                 </tr>
               ) : null}
@@ -475,8 +482,8 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
               <tr className={palette.textSecondary}>
                 <th className="px-2.5 py-2 font-semibold">Quando</th>
                 <th className="px-2.5 py-2 font-semibold">Evento</th>
-                <th className="px-2.5 py-2 font-semibold">Versao</th>
-                <th className="px-2.5 py-2 font-semibold">Usuario</th>
+                <th className="px-2.5 py-2 font-semibold">Versão</th>
+                <th className="px-2.5 py-2 font-semibold">Usuário</th>
                 <th className="px-2.5 py-2 font-semibold">Descricao</th>
               </tr>
             </thead>
@@ -516,9 +523,9 @@ function DocumentDetailContent({ palette, isDark, currentUser }) {
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-700/40 pb-4">
               <div>
                 <span className={modalBadgeClass}>Versionamento</span>
-                <h3 className="mt-2 text-xl font-semibold">Nova versao do documento</h3>
+                <h3 className="mt-2 text-xl font-semibold">Nova versão do documento</h3>
                 <p className={`mt-1 text-sm ${palette.textSecondary}`}>
-                  Ajuste os dados necessarios e salve uma nova versao sem sobrescrever a vigente.
+                  Ajuste os dados necessarios e salve uma nova versão sem sobrescrever a vigente.
                 </p>
               </div>
 
@@ -572,12 +579,14 @@ export function DocumentDetailPage() {
   return (
     <AppShell
       title="Detalhe do Documento"
-      subtitle="Metadados, arquivo, historico de versoes e trilha de auditoria."
+      subtitle="Metadados, arquivo, histórico de versões e trilha de auditoria."
     >
       {(shellProps) => <DocumentDetailContent {...shellProps} />}
     </AppShell>
   )
 }
+
+
 
 
 

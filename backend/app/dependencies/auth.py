@@ -18,7 +18,7 @@ def get_current_user(
     """Resolve the authenticated user from the bearer token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Nao autenticado.",
+        detail="Não autenticado.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -35,3 +35,4 @@ def get_current_user(
     if not user:
         raise credentials_exception
     return user
+

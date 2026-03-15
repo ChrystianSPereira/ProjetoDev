@@ -1,1 +1,2 @@
-export { DocumentsListPage as DocumentsWorkflowPage } from './DocumentsListPage'
+﻿export { DocumentsListPage as DocumentsWorkflowPage } from './DocumentsListPage'
+

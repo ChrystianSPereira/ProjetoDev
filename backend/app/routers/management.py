@@ -1,4 +1,4 @@
-"""Support endpoints for sectors, document types, and users."""
+﻿"""Support endpoints for sectors, document types, and users."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
@@ -32,7 +32,7 @@ def _require_management_access(user: User) -> None:
     if user.role != UserRole.ADMINISTRADOR:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Somente administrador pode realizar esta acao.",
+            detail="Somente administrador pode realizar esta ação.",
         )
 
 
@@ -49,7 +49,7 @@ def _get_user_by_id(db: Session, user_id: int) -> User:
     """Load user by id for administrator-scoped operations."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario nao encontrado.")
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
     return user
 
 
@@ -98,7 +98,7 @@ def update_sector(
 
     sector = db.query(Sector).filter(Sector.id == sector_id).first()
     if not sector:
-        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+        raise HTTPException(status_code=404, detail="Setor não encontrado.")
 
     sector.name = payload.name.strip()
 
@@ -123,7 +123,7 @@ def delete_sector(
 
     sector = db.query(Sector).filter(Sector.id == sector_id).first()
     if not sector:
-        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+        raise HTTPException(status_code=404, detail="Setor não encontrado.")
 
     db.delete(sector)
 
@@ -133,7 +133,7 @@ def delete_sector(
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Setor possui vinculacoes e nao pode ser excluido.",
+            detail="Setor possui vinculações e não pode ser excluido.",
         ) from exc
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -219,7 +219,7 @@ def create_user(
 
     sector = db.query(Sector).filter(Sector.id == target_sector_id).first()
     if not sector:
-        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+        raise HTTPException(status_code=404, detail="Setor não encontrado.")
 
     user = User(
         name=payload.name.strip(),
@@ -271,7 +271,7 @@ def update_user(
     if payload.sector_id is not None:
         sector = db.query(Sector).filter(Sector.id == payload.sector_id).first()
         if not sector:
-            raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+            raise HTTPException(status_code=404, detail="Setor não encontrado.")
         target_user.sector_id = payload.sector_id
 
     if payload.password is not None:
@@ -298,10 +298,11 @@ def delete_user(
 
     if current_user.id == user_id:
         raise HTTPException(
-            status_code=400, detail="Nao e permitido excluir o proprio usuario."
+            status_code=400, detail="Não e permitido excluir o próprio usuário."
         )
 
     target_user = _get_user_by_id(db, user_id=user_id)
     db.delete(target_user)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+

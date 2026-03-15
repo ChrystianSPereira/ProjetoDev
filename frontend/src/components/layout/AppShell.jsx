@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { clearAccessToken, getAccessToken, getUserProfile, saveUserProfile } from '../../features/auth/authStorage'
@@ -56,7 +56,7 @@ function buildAdminMenu(role) {
 
   if (isAdminRole(role)) {
     items.push({ key: 'setores', label: 'Setores da Empresa', path: '/setores' })
-    items.push({ key: 'usuarios', label: 'Usuarios do Sistema', path: '/usuarios' })
+    items.push({ key: 'usuários', label: 'Usuários do Sistema', path: '/usuarios' })
   }
 
   if (canAccessAudit(role)) {
@@ -153,7 +153,7 @@ function validatePasswordInput(form) {
     return 'A nova senha deve conter maiuscula, minuscula, numero e caractere especial.'
   }
   if (form.newPassword !== form.confirmNewPassword) {
-    return 'A confirmacao da nova senha nao confere.'
+    return 'A confirmação da nova senha não confere.'
   }
   if (form.newPassword === form.currentPassword) {
     return 'A nova senha deve ser diferente da senha atual.'
@@ -340,7 +340,7 @@ function handleLogout() {
     })
   }
 
-  const currentUserLabel = currentUser?.name || 'Usuario'
+  const currentUserLabel = currentUser?.name || 'Usuário'
   const currentRoleLabel = roleLabel(currentUser?.role)
 
   const passwordCriteria = useMemo(
@@ -371,7 +371,7 @@ function handleLogout() {
               : 'error',
       },
       {
-        label: 'Confirmacao igual a nova senha',
+        label: 'Confirmação igual a nova senha',
         status:
           passwordForm.newPassword.length === 0 && passwordForm.confirmNewPassword.length === 0
             ? 'neutral'
@@ -416,7 +416,7 @@ function handleLogout() {
 
           <div className="mt-6 min-h-0 flex-1 space-y-6 overflow-y-auto pr-1 overscroll-contain">
             <div>
-              <SectionTitle hidden={sidebarCollapsed}>Operacao</SectionTitle>
+              <SectionTitle hidden={sidebarCollapsed}>Operação</SectionTitle>
               <nav className="space-y-1">{renderMenu(operationMenu)}</nav>
             </div>
 
@@ -678,6 +678,7 @@ function handleLogout() {
     </div>
   )
 }
+
 
 
 

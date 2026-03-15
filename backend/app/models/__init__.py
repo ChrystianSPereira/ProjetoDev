@@ -1,4 +1,4 @@
-"""ORM models exported for metadata registration and migrations."""
+﻿"""ORM models exported for metadata registration and migrations."""
 
 from .sector import Sector
 from .document_type import DocumentType
@@ -20,3 +20,4 @@ __all__ = [
     "DocumentStatus",
     "AuditEventType",
 ]
+

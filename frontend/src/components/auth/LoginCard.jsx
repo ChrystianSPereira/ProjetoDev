@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 
 function InputField({
   id,
@@ -57,14 +57,14 @@ export function LoginCard({ onSubmit, loading = false, error = '' }) {
         Seja bem-vindo(a)!
       </h1>
       <p className="mt-2 text-sm text-(--card-text)">
-        Faca login para acessar documentos vigentes, fluxo de aprovacao e trilha de auditoria.
+        Faca login para acessar documentos vigentes, fluxo de aprovação e trilha de auditoria.
       </p>
 
       <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
         <InputField
           id="username"
-          label="Usuario"
-          placeholder="Digite seu usuario corporativo"
+          label="Usuário"
+          placeholder="Digite seu usuário corporativo"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           rightAdornment={
@@ -138,9 +138,10 @@ export function LoginCard({ onSubmit, loading = false, error = '' }) {
       </form>
 
       <div className="mt-6 flex items-center justify-between text-[11px] text-slate-400">
-        <span>v0.1.0 - Plataforma de Gestao Documental</span>
+        <span>v0.1.0 - Plataforma de Gestão Documental</span>
         <span>2026 - Uso interno corporativo</span>
       </div>
     </div>
   )
 }
+

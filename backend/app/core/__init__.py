@@ -1,1 +1,2 @@
-"""Core application settings and security helpers."""
+﻿"""Core application settings and security helpers."""
+

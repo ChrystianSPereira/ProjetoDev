@@ -1,4 +1,4 @@
-"""Authentication routes (login and current user profile)."""
+﻿"""Authentication routes (login and current user profile)."""
 
 from datetime import timedelta
 
@@ -103,7 +103,7 @@ def change_password(
     if payload.new_password != payload.confirm_new_password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A confirmacao da nova senha nao confere.",
+            detail="A confirmação da nova senha não confere.",
         )
 
     if payload.current_password == payload.new_password:
@@ -119,3 +119,4 @@ def change_password(
     db.commit()
 
     return MessageResponse(message="Senha atualizada com sucesso.")
+

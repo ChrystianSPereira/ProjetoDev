@@ -53,3 +53,4 @@ export function clearAccessToken() {
   window.localStorage.removeItem(USER_PROFILE_KEY)
   window.sessionStorage.removeItem(USER_PROFILE_KEY)
 }
+

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+﻿from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -12,3 +12,4 @@ class DocumentType(Base):
     name = Column(String, unique=True, nullable=False)
 
     documents = relationship("Document", back_populates="document_type")
+

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import {
@@ -202,7 +203,7 @@ export function SectorsPage() {
   }
 
   return (
-    <AppShell title="Gestao de Setores" subtitle="Cadastro e manutencao dos setores da empresa.">
+    <AppShell title="Gestão de Setores" subtitle="Cadastro e manutenção dos setores da empresa.">
       {({ palette, canManageUsers, isDark }) => {
         const inputClass = isDark
           ? 'h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
@@ -228,7 +229,7 @@ export function SectorsPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-semibold tracking-[0.08em] text-cyan-300 uppercase">
                   <BuildingIcon />
-                  Administracao de setores
+                  Administração de setores
                 </div>
               </div>
 
@@ -282,23 +283,25 @@ export function SectorsPage() {
                   <p className="mt-1 text-2xl font-bold">{total}</p>
                 </article>
                 <article className={`rounded-xl border p-3 ${isDark ? 'border-slate-700 bg-slate-950/40' : 'border-slate-200 bg-slate-50'}`}>
-                  <p className={`text-[11px] uppercase tracking-[0.08em] ${palette.textSecondary}`}>Pagina atual</p>
+                  <p className={`text-[11px] uppercase tracking-[0.08em] ${palette.textSecondary}`}>Página atual</p>
                   <p className="mt-1 text-2xl font-bold">{page}/{totalPages}</p>
                 </article>
               </div>
             </article>
 
-            {feedback ? (
-              <article className={`rounded-2xl border p-3 ${palette.panel}`}>
-                <p className="text-xs text-emerald-500">{feedback}</p>
-              </article>
-            ) : null}
+                        <FeedbackBanner
+              variant="success"
+              message={feedback}
+              title="Operação concluida"
+              onClose={() => setFeedback('')}
+            />
 
-            {error ? (
-              <article className={`rounded-2xl border p-3 ${palette.panel}`}>
-                <p className="text-xs text-rose-500">{error}</p>
-              </article>
-            ) : null}
+            <FeedbackBanner
+              variant="error"
+              message={error}
+              title="Falha na operação"
+              onClose={() => setError('')}
+            />
 
             <article className={`rounded-2xl border p-4 ${palette.panel}`}>
               <div className="mb-3 flex items-center justify-between gap-2">
@@ -318,7 +321,7 @@ export function SectorsPage() {
                     <tr className={palette.textSecondary}>
                       <th className="px-2.5 py-2 font-semibold">ID</th>
                       <th className="px-2.5 py-2 font-semibold">Nome</th>
-                      <th className="px-2.5 py-2 text-right font-semibold">Acoes</th>
+                      <th className="px-2.5 py-2 text-right font-semibold">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -378,7 +381,7 @@ export function SectorsPage() {
                     Anterior
                   </button>
                   <span className={`text-xs ${palette.textSecondary}`}>
-                    Pagina {page} de {totalPages}
+                    Página {page} de {totalPages}
                   </span>
                   <button
                     type="button"
@@ -437,15 +440,15 @@ export function SectorsPage() {
                   disabled={updating}
                   className="h-10 w-full rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {updating ? 'Salvando...' : 'Salvar alteracoes'}
+                  {updating ? 'Salvando...' : 'Salvar alterações'}
                 </button>
               </form>
             </Modal>
 
             <Modal
               isOpen={!!deleteTarget}
-              title="Confirmar exclusao"
-              description="A exclusao pode ser bloqueada se houver usuarios ou documentos vinculados."
+              title="Confirmar exclusão"
+              description="A exclusão pode ser bloqueada se houver usuários ou documentos vinculados."
               onClose={() => {
                 if (!deleting) setDeleteTarget(null)
               }}
@@ -464,7 +467,7 @@ export function SectorsPage() {
                   disabled={deleting}
                   className="h-9 rounded-xl bg-rose-600 px-4 text-xs font-semibold text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {deleting ? 'Excluindo...' : 'Confirmar exclusao'}
+                  {deleting ? 'Excluindo...' : 'Confirmar exclusão'}
                 </button>
               </div>
             </Modal>
@@ -474,3 +477,5 @@ export function SectorsPage() {
     </AppShell>
   )
 }
+
+

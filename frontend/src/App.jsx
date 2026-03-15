@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+﻿import { Navigate, Route, Routes } from 'react-router-dom'
 
 import { ProtectedRoute } from './components/layout/ProtectedRoute'
 import { AuditPage } from './pages/AuditPage'
@@ -31,3 +31,4 @@ function App() {
 }
 
 export default App
+

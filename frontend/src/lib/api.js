@@ -1,4 +1,4 @@
-const API_BASE = '/api'
+﻿const API_BASE = '/api'
 
 function formBody(values) {
   return new URLSearchParams(values).toString()
@@ -191,7 +191,7 @@ export async function listUsersRequest(token, { q = '', role = '', skip = 0, lim
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao carregar usuarios.'))
+    throw new Error(buildMessage(data, 'Falha ao carregar usuários.'))
   }
 
   return data
@@ -210,7 +210,7 @@ export async function createUserRequest(token, payload) {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao criar usuario.'))
+    throw new Error(buildMessage(data, 'Falha ao criar usuário.'))
   }
 
   return data
@@ -229,7 +229,7 @@ export async function updateUserRequest(token, userId, payload) {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao atualizar usuario.'))
+    throw new Error(buildMessage(data, 'Falha ao atualizar usuário.'))
   }
 
   return data
@@ -245,7 +245,7 @@ export async function deleteUserRequest(token, userId) {
 
   if (!response.ok) {
     const data = await parseJson(response)
-    throw new Error(buildMessage(data, 'Falha ao excluir usuario.'))
+    throw new Error(buildMessage(data, 'Falha ao excluir usuário.'))
   }
 }
 
@@ -302,7 +302,7 @@ export async function listReviewQueueRequest(token, { skip = 0, limit = 20 } = {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao carregar fila de aprovacao.'))
+    throw new Error(buildMessage(data, 'Falha ao carregar fila de aprovação.'))
   }
 
   return data
@@ -336,7 +336,7 @@ export async function approveVersionRequest(token, versionId) {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao aprovar versao.'))
+    throw new Error(buildMessage(data, 'Falha ao aprovar versão.'))
   }
 
   return data
@@ -355,7 +355,7 @@ export async function rejectVersionRequest(token, versionId, reason) {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao reprovar versao.'))
+    throw new Error(buildMessage(data, 'Falha ao reprovar versão.'))
   }
 
   return data
@@ -456,7 +456,7 @@ export async function listDocumentVersionsRequest(token, documentId) {
   const data = await parseJson(response)
 
   if (!response.ok) {
-    throw new Error(buildMessage(data, 'Falha ao carregar versoes do documento.'))
+    throw new Error(buildMessage(data, 'Falha ao carregar versões do documento.'))
   }
 
   return data
@@ -481,3 +481,5 @@ export async function changePasswordRequest(token, payload) {
 
   return data
 }
+
+

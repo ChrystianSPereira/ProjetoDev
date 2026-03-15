@@ -1,7 +1,7 @@
-export function DataPagination({ page, totalPages, onPrev, onNext, textSecondaryClass, buttonClass }) {
+﻿export function DataPagination({ page, totalPages, onPrev, onNext, textSecondaryClass, buttonClass }) {
   return (
     <div className="mt-3 flex items-center justify-between">
-      <p className={`text-xs ${textSecondaryClass}`}>Pagina {page} de {totalPages}</p>
+      <p className={`text-xs ${textSecondaryClass}`}>Página {page} de {totalPages}</p>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -23,3 +23,4 @@ export function DataPagination({ page, totalPages, onPrev, onNext, textSecondary
     </div>
   )
 }
+

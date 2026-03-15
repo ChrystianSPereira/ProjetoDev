@@ -1,4 +1,4 @@
-"""Database configuration and SQLAlchemy session utilities."""
+﻿"""Database configuration and SQLAlchemy session utilities."""
 
 import os
 from collections.abc import Generator
@@ -15,7 +15,7 @@ load_dotenv(dotenv_path=ENV_PATH)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL nao configurada no ambiente.")
+    raise RuntimeError("DATABASE_URL não configurada no ambiente.")
 
 
 def _engine_kwargs(database_url: str) -> dict:
@@ -46,3 +46,4 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+

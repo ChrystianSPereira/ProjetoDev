@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import { listAuditLogsRequest } from '../lib/api'
@@ -158,13 +159,13 @@ export function AuditPage() {
                 <input
                   value={filters.versionId}
                   onChange={(event) => setFilters((prev) => ({ ...prev, versionId: event.target.value }))}
-                  placeholder="ID Versao"
+                  placeholder="ID Versão"
                   className={inputClass}
                 />
                 <input
                   value={filters.actorUserId}
                   onChange={(event) => setFilters((prev) => ({ ...prev, actorUserId: event.target.value }))}
-                  placeholder="ID Usuario"
+                  placeholder="ID Usuário"
                   className={inputClass}
                 />
                 <select
@@ -223,11 +224,12 @@ export function AuditPage() {
               </form>
             </article>
 
-            {error ? (
-              <article className={`rounded-2xl border p-3 ${palette.panel}`}>
-                <p className="text-xs text-rose-500">{error}</p>
-              </article>
-            ) : null}
+            <FeedbackBanner
+              variant="error"
+              message={error}
+              title="Falha ao carregar auditoria"
+              onClose={() => setError('')}
+            />
 
             <article className={`rounded-2xl border p-4 ${palette.panel}`}>
               <h2 className="text-base font-semibold">Eventos de auditoria</h2>
@@ -303,7 +305,7 @@ export function AuditPage() {
                     Anterior
                   </button>
                   <span className={`text-xs ${palette.textSecondary}`}>
-                    Pagina {page} de {totalPages}
+                    Página {page} de {totalPages}
                   </span>
                   <button
                     type="button"
@@ -322,6 +324,9 @@ export function AuditPage() {
     </AppShell>
   )
 }
+
+
+
 
 
 

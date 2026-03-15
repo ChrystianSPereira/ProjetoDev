@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -236,7 +236,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
     const statusCounts = [
       { label: 'Vigente', value: activeDocs.length, colorClass: 'bg-emerald-500' },
-      { label: 'Em revisao', value: inReviewDocs.length, colorClass: 'bg-amber-500' },
+      { label: 'Em revisão', value: inReviewDocs.length, colorClass: 'bg-amber-500' },
       { label: 'Rascunho', value: draftDocs.length, colorClass: 'bg-slate-400' },
       { label: 'Obsoleto', value: obsoleteDocs.length, colorClass: 'bg-rose-500' },
     ]
@@ -384,9 +384,9 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
           textSecondaryClass={palette.textSecondary}
         />
         <KpiCard
-          title="Em revisao"
+          title="Em revisão"
           value={inReviewDocs.length}
-          subtitle="Aguardando validacao da coordenacao"
+          subtitle="Aguardando validação da coordenação"
           tone="warning"
           icon={<ReviewIcon className="h-5 w-5" />}
           panelClass={palette.panel}
@@ -395,16 +395,16 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
         <KpiCard
           title="Rascunhos"
           value={draftDocs.length}
-          subtitle="Versoes em elaboracao"
+          subtitle="Versões em elaboração"
           tone="info"
           icon={<DraftIcon className="h-5 w-5" />}
           panelClass={palette.panel}
           textSecondaryClass={palette.textSecondary}
         />
         <KpiCard
-          title="Taxa de aprovacao"
+          title="Taxa de aprovação"
           value={computed.approvalRate === null ? '-' : `${computed.approvalRate}%`}
-          subtitle={auditUnavailable ? 'Sem acesso aos logs de auditoria' : 'Base: aprovacoes x reprovacoes'}
+          subtitle={auditUnavailable ? 'Sem acesso aos logs de auditoria' : 'Base: aprovações x reprovações'}
           tone={computed.approvalRate !== null && computed.approvalRate >= 70 ? 'success' : 'warning'}
           icon={<RateIcon className="h-5 w-5" />}
           panelClass={palette.panel}
@@ -491,7 +491,7 @@ function DashboardContent({ palette, currentUser, isAdmin, isDark }) {
 
         <article className={`rounded-2xl border p-4 ${palette.panel}`}>
           <h2 className="text-base font-semibold">Tendencia de decisoes</h2>
-          <p className={`mt-1 text-xs ${palette.textSecondary}`}>Aprovacoes e reprovacoes por mes (ultimos 6 meses).</p>
+          <p className={`mt-1 text-xs ${palette.textSecondary}`}>Aprovações e reprovações por mes (ultimos 6 meses).</p>
 
           {auditUnavailable ? (
             <div className="mt-4 rounded-xl border border-slate-700/30 p-3">
@@ -555,9 +555,10 @@ export function DashboardPage() {
   return (
     <AppShell
       title="Dashboard"
-      subtitle="Painel executivo com indicadores operacionais da gestao documental."
+      subtitle="Painel executivo com indicadores operacionais da gestão documental."
     >
       {(shellProps) => <DashboardContent {...shellProps} />}
     </AppShell>
   )
 }
+

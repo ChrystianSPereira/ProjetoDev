@@ -19,7 +19,7 @@ from .schemas.common import ApiStatusResponse, ErrorResponse
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Sistema de Gestao Documental",
+    title="Sistema de Gestão Documental",
     version="0.1.0",
     description="API REST para gerenciamento documental com controle de ciclo de vida.",
 )
@@ -80,7 +80,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     payload = _error_payload(
         status_code=500,
         error="INTERNAL_SERVER_ERROR",
-        message="Erro interno nao tratado.",
+        message="Erro interno não tratado.",
         path=str(request.url.path),
     )
     return JSONResponse(status_code=500, content=payload)
@@ -106,3 +106,4 @@ app.include_router(auth_router)
 app.include_router(documents_router)
 app.include_router(management_router)
 app.include_router(audit_router)
+

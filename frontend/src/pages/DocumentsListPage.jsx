@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import {
   DataPagination,
   DocumentForm,
@@ -202,7 +203,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
 
   async function handleSaveDraftFromModal(payload) {
     if (!(actor.role === 'AUTOR' || isAdmin)) {
-      setError('Perfil sem permissao para criar rascunhos.')
+      setError('Perfil sem permissão para criar rascunhos.')
       return
     }
 
@@ -217,7 +218,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
       await createDraftRequest(token, payload)
 
       setCreateModalOpen(false)
-      setFeedback(createModalMode === 'revision' ? 'Nova versao em rascunho criada com sucesso.' : 'Rascunho criado com sucesso.')
+      setFeedback(createModalMode === 'revision' ? 'Nova versão em rascunho criada com sucesso.' : 'Rascunho criado com sucesso.')
       await loadList(page, appliedFilters)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao criar rascunho.')
@@ -228,7 +229,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
 
   async function handleSubmitReviewFromModal(payload) {
     if (!(actor.role === 'AUTOR' || isAdmin)) {
-      setError('Perfil sem permissao para criar e submeter rascunhos.')
+      setError('Perfil sem permissão para criar e submeter rascunhos.')
       return
     }
 
@@ -244,7 +245,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
       await submitDraftRequest(token, created.id)
 
       setCreateModalOpen(false)
-      setFeedback(createModalMode === 'revision' ? 'Nova versao criada e enviada para revisao com sucesso.' : 'Rascunho criado e enviado para revisao com sucesso.')
+      setFeedback(createModalMode === 'revision' ? 'Nova versão criada e enviada para revisão com sucesso.' : 'Rascunho criado e enviado para revisão com sucesso.')
       await loadList(page, appliedFilters)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao criar e submeter rascunho.')
@@ -262,10 +263,10 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
       setError('')
       setFeedback('')
       await submitDraftRequest(token, row.version_id)
-      setFeedback('Documento enviado para revisao com sucesso.')
+      setFeedback('Documento enviado para revisão com sucesso.')
       await loadList(page, appliedFilters)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao enviar para revisao.')
+      setError(err instanceof Error ? err.message : 'Falha ao enviar para revisão.')
     } finally {
       setSubmittingVersionId(null)
     }
@@ -336,18 +337,18 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
     : 'inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-100 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] text-cyan-700 uppercase'
 
   const isRevisionModal = createModalMode === 'revision'
-  const modalBadgeText = isRevisionModal ? 'Versionamento' : 'Criacao guiada'
-  const modalTitle = isRevisionModal ? 'Nova versao do documento' : 'Novo documento'
+  const modalBadgeText = isRevisionModal ? 'Versionamento' : 'Criação guiada'
+  const modalTitle = isRevisionModal ? 'Nova versão do documento' : 'Novo documento'
   const modalDescription = isRevisionModal
-    ? 'Ajuste os dados necessarios e salve uma nova versao sem sobrescrever a vigente.'
-    : 'Preencha os campos obrigatorios para criar um rascunho e, opcionalmente, enviar para revisao.'
+    ? 'Ajuste os dados necessarios e salve uma nova versão sem sobrescrever a vigente.'
+    : 'Preencha os campos obrigatórios para criar um rascunho e, opcionalmente, enviar para revisão.'
 
   return (
     <>
       <article className={panelClass}>
         <div className="mb-3">
           <p className={`text-xs ${palette.textSecondary}`}>
-            Busca protegida: por padrao a listagem privilegia sempre a versao Vigente.
+            Busca protegida: por padrao a listagem privilegia sempre a versão Vigente.
           </p>
         </div>
 
@@ -375,17 +376,19 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
         />
       </article>
 
-      {feedback ? (
-        <article className={panelClass}>
-          <p className="text-xs text-emerald-500">{feedback}</p>
-        </article>
-      ) : null}
+      <FeedbackBanner
+        variant="success"
+        message={feedback}
+        title="Operação concluida"
+        onClose={() => setFeedback('')}
+      />
 
-      {error ? (
-        <article className={panelClass}>
-          <p className="text-xs text-rose-500">{error}</p>
-        </article>
-      ) : null}
+      <FeedbackBanner
+        variant="error"
+        message={error}
+        title="Falha na operação"
+        onClose={() => setError('')}
+      />
 
       <article className={panelClass}>
         <div className="mb-3 flex items-center justify-between gap-2">
@@ -459,7 +462,7 @@ function DocumentsListContent({ palette, isDark, currentUser }) {
                   onClick={() => openRevisionModal(row)}
                   className="h-9 rounded-xl border border-amber-500/40 px-3 text-xs font-semibold text-amber-500 hover:bg-amber-500/10"
                 >
-                  Nova versao
+                  Nova versão
                 </button>
               ) : null}
             </div>
@@ -545,12 +548,15 @@ export function DocumentsListPage() {
   return (
     <AppShell
       title="Documentos"
-      subtitle="Listagem principal com busca segura focada na versao vigente de cada documento."
+      subtitle="Listagem principal com busca segura focada na versão vigente de cada documento."
     >
       {(shellProps) => <DocumentsListContent {...shellProps} />}
     </AppShell>
   )
 }
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, ForeignKey, Integer, String
+﻿from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -17,3 +17,4 @@ class User(Base):
     sector_id = Column(Integer, ForeignKey("sectors.id"), nullable=False)
 
     sector = relationship("Sector", back_populates="users")
+

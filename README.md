@@ -1,4 +1,4 @@
-﻿# Desafio Tecnico - Sistema de Gestao Documental
+﻿# Desafio Técnico - Sistema de Gestão Documental
 
 O objetivo e construir uma aplicação de gestão documental que permita controlar versões de documentos, fluxo de aprovação e visibilidade por setor.
 
@@ -30,37 +30,37 @@ ProjetoDev/
 # Etapas de Desenvolvimento
 
 ## 1. Estrutura inicial
-- criacao do repositorio
-- organizacao das pastas
-- criacao do README
+- criação do repositorio
+- organização das pastas
+- criação do README
 
-## 2. Configuracao do ambiente
-- criacao do docker-compose
-- configuracao do PostgreSQL
-- configuracao dos containers
+## 2. Configuração do ambiente
+- criação do docker-compose
+- configuração do PostgreSQL
+- configuração dos containers
 
 ## 3. Desenvolvimento do Backend
-- criacao da API com FastAPI
+- criação da API com FastAPI
 - conexao com PostgreSQL
-- criacao das entidades do banco
-- autenticacao com JWT
+- criação das entidades do banco
+- autenticação com JWT
 
-## 4. Implementacao das regras de negocio
-- criacao de documentos
+## 4. Implementação das regras de negocio
+- criação de documentos
 - versionamento de documentos
-- fluxo de revisao
-- aprovacao e rejeicao
-- auditoria de acoes
+- fluxo de revisão
+- aprovação e rejeicao
+- auditoria de ações
 
 ## 5. Desenvolvimento do Frontend
 - tela de login
 - dashboard de documentos
-- criacao de documentos
-- fluxo de aprovacao
+- criação de documentos
+- fluxo de aprovação
 
-## 6. Integracao final
-- comunicacao entre frontend e backend
-- validacao das regras de negocio
+## 6. Integração final
+- comunicação entre frontend e backend
+- validação das regras de negocio
 - testes basicos
 
 ## Usúarios 

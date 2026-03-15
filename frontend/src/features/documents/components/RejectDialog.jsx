@@ -1,11 +1,11 @@
-export function RejectDialog({ open, reason, onReasonChange, onCancel, onConfirm, submitting }) {
+﻿export function RejectDialog({ open, reason, onReasonChange, onCancel, onConfirm, submitting }) {
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <button type="button" className="absolute inset-0 bg-slate-950/70" onClick={onCancel} />
       <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-4 text-slate-100 shadow-2xl">
-        <h3 className="text-sm font-semibold">Motivo da reprovacao</h3>
+        <h3 className="text-sm font-semibold">Motivo da reprovação</h3>
         <p className="mt-1 text-xs text-slate-400">Explique ao autor o que precisa ser ajustado antes da nova submissao.</p>
 
         <textarea
@@ -36,3 +36,4 @@ export function RejectDialog({ open, reason, onReasonChange, onCancel, onConfirm
     </div>
   )
 }
+

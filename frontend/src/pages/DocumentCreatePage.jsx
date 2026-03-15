@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import { DocumentForm } from '../features/documents/components'
 import { getAccessToken } from '../features/auth/authStorage'
 import {
@@ -104,7 +105,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
       })
       .catch((err) => {
         if (!isMounted) return
-        setError(err instanceof Error ? err.message : 'Nao foi possivel carregar documento base para revisao.')
+        setError(err instanceof Error ? err.message : 'Não foi possivel carregar documento base para revisão.')
       })
 
     return () => {
@@ -114,7 +115,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
 
   async function handleSaveDraft(payload) {
     if (!canCreateDraft) {
-      setError('Perfil sem permissao para criar rascunhos.')
+      setError('Perfil sem permissão para criar rascunhos.')
       return
     }
 
@@ -139,7 +140,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
 
   async function handleSubmitReview(payload) {
     if (!canCreateDraft) {
-      setError('Perfil sem permissao para criar e submeter rascunhos.')
+      setError('Perfil sem permissão para criar e submeter rascunhos.')
       return
     }
 
@@ -154,7 +155,7 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
       const created = await createDraftRequest(token, payload)
       await submitDraftRequest(token, created.id)
 
-      setFeedback('Rascunho salvo e enviado para revisao com sucesso.')
+      setFeedback('Rascunho salvo e enviado para revisão com sucesso.')
       navigate(`/documentos/${created.document_id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao salvar e submeter documento.')
@@ -190,9 +191,9 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
       <article className={panelClass}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-base font-semibold">Criacao de documento</h2>
+            <h2 className="text-base font-semibold">Criação de documento</h2>
             <p className={`mt-1 text-xs ${palette.textSecondary}`}>
-              Preencha metadados obrigatorios: setor, tipo documental e data de vencimento.
+              Preencha metadados obrigatórios: setor, tipo documental e data de vencimento.
             </p>
           </div>
 
@@ -202,17 +203,19 @@ function DocumentCreateContent({ palette, isDark, currentUser }) {
         </div>
       </article>
 
-      {feedback ? (
-        <article className={panelClass}>
-          <p className="text-xs text-emerald-500">{feedback}</p>
-        </article>
-      ) : null}
+            <FeedbackBanner
+        variant="success"
+        message={feedback}
+        title="Operação concluida"
+        onClose={() => setFeedback('')}
+      />
 
-      {error ? (
-        <article className={panelClass}>
-          <p className="text-xs text-rose-500">{error}</p>
-        </article>
-      ) : null}
+      <FeedbackBanner
+        variant="error"
+        message={error}
+        title="Falha na operação"
+        onClose={() => setError('')}
+      />
 
       <article className={panelClass}>
         <DocumentForm
@@ -236,12 +239,14 @@ export function DocumentCreatePage() {
   return (
     <AppShell
       title="Novo Documento"
-      subtitle="Criacao de rascunho com validacao amigavel e envio para revisao."
+      subtitle="Criação de rascunho com validação amigavel e envio para revisão."
     >
       {(shellProps) => <DocumentCreateContent {...shellProps} />}
     </AppShell>
   )
 }
+
+
 
 
 

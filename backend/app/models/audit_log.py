@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String, func
+﻿from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -27,3 +27,4 @@ class AuditLog(Base):
     payload = Column(JSON, nullable=True)
 
     actor = relationship("User", foreign_keys=[actor_user_id])
+

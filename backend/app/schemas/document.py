@@ -1,4 +1,4 @@
-"""Document lifecycle request/response schemas."""
+﻿"""Document lifecycle request/response schemas."""
 
 from datetime import date, datetime
 
@@ -157,4 +157,5 @@ class DocumentDetailResponse(BaseModel):
     active_version_id: int | None
     versions: list[DocumentVersionDetailResponse]
     audits: list[DocumentAuditItemResponse]
+
 

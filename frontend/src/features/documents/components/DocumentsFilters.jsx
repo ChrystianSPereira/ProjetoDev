@@ -1,4 +1,4 @@
-export function DocumentsFilters({
+﻿export function DocumentsFilters({
   filters,
   sectors,
   documentTypes,
@@ -11,7 +11,7 @@ export function DocumentsFilters({
   statusOptions = [
     { value: '', label: 'Status (com foco em vigente)' },
     { value: 'DRAFT', label: 'Rascunho' },
-    { value: 'IN_REVIEW', label: 'Em Revisao' },
+    { value: 'IN_REVIEW', label: 'Em Revisão' },
     { value: 'ACTIVE', label: 'Vigente' },
     { value: 'OBSOLETE', label: 'Obsoleto' },
   ],
@@ -100,3 +100,4 @@ export function DocumentsFilters({
     </form>
   )
 }
+

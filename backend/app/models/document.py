@@ -1,4 +1,4 @@
-from sqlalchemy import (
+﻿from sqlalchemy import (
     Column,
     DateTime,
     Enum,
@@ -35,3 +35,4 @@ class Document(Base):
     document_type = relationship("DocumentType", back_populates="documents")
     created_by = relationship("User", foreign_keys=[created_by_user_id])
     versions = relationship("DocumentVersion", back_populates="document", cascade="all, delete-orphan")
+

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AppShell } from '../components/layout/AppShell'
+import { FeedbackBanner } from '../components/ui/FeedbackBanner'
 import { Skeleton } from '../components/ui/Skeleton'
 import { getAccessToken } from '../features/auth/authStorage'
 import {
@@ -114,7 +115,7 @@ export function UsersPage() {
       setUsers(data.items || [])
       setTotal(data.total || 0)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao carregar usuarios.')
+      setError(err instanceof Error ? err.message : 'Falha ao carregar usuários.')
     } finally {
       setLoading(false)
     }
@@ -211,14 +212,14 @@ export function UsersPage() {
         sector_id: Number(createForm.sectorId),
       })
 
-      setFeedback('Usuario criado com sucesso.')
+      setFeedback('Usuário criado com sucesso.')
       setIsCreateModalOpen(false)
       resetCreateForm()
       setPage(1)
       await loadUsers(1, appliedQuery, appliedRoleFilter)
       await loadSectors()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao criar usuario.')
+      setError(err instanceof Error ? err.message : 'Falha ao criar usuário.')
     } finally {
       setCreating(false)
     }
@@ -247,12 +248,12 @@ export function UsersPage() {
 
       await updateUserRequest(token, editUserId, payload)
 
-      setFeedback('Usuario atualizado com sucesso.')
+      setFeedback('Usuário atualizado com sucesso.')
       setIsEditModalOpen(false)
       await loadUsers(page, appliedQuery, appliedRoleFilter)
       await loadSectors()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao atualizar usuario.')
+      setError(err instanceof Error ? err.message : 'Falha ao atualizar usuário.')
     } finally {
       setUpdating(false)
     }
@@ -269,18 +270,18 @@ export function UsersPage() {
 
       await deleteUserRequest(token, deleteTarget.id)
 
-      setFeedback('Usuario excluido com sucesso.')
+      setFeedback('Usuário excluido com sucesso.')
       setDeleteTarget(null)
       await loadUsers(page, appliedQuery, appliedRoleFilter)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Falha ao excluir usuario.')
+      setError(err instanceof Error ? err.message : 'Falha ao excluir usuário.')
     } finally {
       setDeleting(false)
     }
   }
 
   return (
-    <AppShell title="Gestao de Usuarios" subtitle="Administracao de acessos e perfis da plataforma.">
+    <AppShell title="Gestão de Usuários" subtitle="Administração de acessos e perfis da plataforma.">
       {({ palette, canManageUsers, isDark, currentUser }) => {
         const inputClass = isDark
           ? 'h-10 rounded-xl border border-slate-700 bg-slate-950 px-3 text-xs text-slate-100 placeholder:text-slate-500 outline-none'
@@ -343,27 +344,29 @@ export function UsersPage() {
                   </form>
                 </article>
 
-                {feedback ? (
-                  <article className={`rounded-2xl border p-3 ${palette.panel}`}>
-                    <p className="text-xs text-emerald-500">{feedback}</p>
-                  </article>
-                ) : null}
+                <FeedbackBanner
+                  variant="success"
+                  message={feedback}
+                  title="Operação concluida"
+                  onClose={() => setFeedback('')}
+                />
 
-                {error ? (
-                  <article className={`rounded-2xl border p-3 ${palette.panel}`}>
-                    <p className="text-xs text-rose-500">{error}</p>
-                  </article>
-                ) : null}
+                <FeedbackBanner
+                  variant="error"
+                  message={error}
+                  title="Falha na operação"
+                  onClose={() => setError('')}
+                />
 
                 <article className={`rounded-2xl border p-4 ${palette.panel}`}>
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <h2 className="text-base font-semibold">Usuarios cadastrados</h2>
+                    <h2 className="text-base font-semibold">Usuários cadastrados</h2>
                     <button
                       type="button"
                       onClick={openCreateModal}
                       className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500"
                     >
-                      Novo usuario
+                      Novo usuário
                     </button>
                   </div>
 
@@ -376,7 +379,7 @@ export function UsersPage() {
                           <th className="px-2.5 py-2 font-semibold">Email</th>
                           <th className="px-2.5 py-2 font-semibold">Perfil</th>
                           <th className="px-2.5 py-2 font-semibold">Setor</th>
-                          <th className="px-2.5 py-2 text-right font-semibold">Acoes</th>
+                          <th className="px-2.5 py-2 text-right font-semibold">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -424,7 +427,7 @@ export function UsersPage() {
                         {!loading && users.length === 0 ? (
                           <tr>
                             <td className={`px-2.5 py-5 text-center ${palette.textSecondary}`} colSpan={6}>
-                              Nenhum usuario encontrado.
+                              Nenhum usuário encontrado.
                             </td>
                           </tr>
                         ) : null}
@@ -433,7 +436,7 @@ export function UsersPage() {
                   </div>
 
                   <div className="mt-3 flex items-center justify-between">
-                    <p className={`text-xs ${palette.textSecondary}`}>Total: {total} usuarios</p>
+                    <p className={`text-xs ${palette.textSecondary}`}>Total: {total} usuários</p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -444,7 +447,7 @@ export function UsersPage() {
                         Anterior
                       </button>
                       <span className={`text-xs ${palette.textSecondary}`}>
-                        Pagina {page} de {totalPages}
+                        Página {page} de {totalPages}
                       </span>
                       <button
                         type="button"
@@ -462,11 +465,11 @@ export function UsersPage() {
 
             <Modal
               isOpen={isCreateModalOpen}
-              title="Criar novo usuario"
+              title="Criar novo usuário"
               onClose={() => setIsCreateModalOpen(false)}
             >
               <p className={`mb-4 text-xs ${palette.textSecondary}`}>
-                Cadastre um usuario definindo perfil de acesso e setor responsavel.
+                Cadastre um usuário definindo perfil de acesso e setor responsavel.
               </p>
 
               <form className="space-y-4" onSubmit={handleCreateSubmit}>
@@ -543,7 +546,7 @@ export function UsersPage() {
                 </div>
 
                 <div className={`rounded-xl border p-3 text-[11px] ${isDark ? 'border-slate-700 bg-slate-950/70 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'}`}>
-                  O usuario criado recebera as permissoes conforme o perfil selecionado e podera atuar no setor definido.
+                  O usuário criado recebera as permissões conforme o perfil selecionado e podera atuar no setor definido.
                 </div>
 
                 <div className="flex items-center justify-end gap-2">
@@ -560,13 +563,13 @@ export function UsersPage() {
                     disabled={creating}
                     className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {creating ? 'Criando...' : 'Criar usuario'}
+                    {creating ? 'Criando...' : 'Criar usuário'}
                   </button>
                 </div>
               </form>
             </Modal>
 
-            <Modal isOpen={isEditModalOpen} title="Editar usuario" onClose={() => setIsEditModalOpen(false)}>
+            <Modal isOpen={isEditModalOpen} title="Editar usuário" onClose={() => setIsEditModalOpen(false)}>
               <form className="grid gap-2 md:grid-cols-2" onSubmit={handleEditSubmit}>
                 <input
                   value={editForm.name}
@@ -623,20 +626,20 @@ export function UsersPage() {
                   disabled={updating}
                   className="md:col-span-2 h-10 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {updating ? 'Salvando...' : 'Salvar alteracoes'}
+                  {updating ? 'Salvando...' : 'Salvar alterações'}
                 </button>
               </form>
             </Modal>
 
             <Modal
               isOpen={!!deleteTarget}
-              title="Confirmar exclusao"
+              title="Confirmar exclusão"
               onClose={() => {
                 if (!deleting) setDeleteTarget(null)
               }}
             >
               <p className="text-sm text-slate-300">
-                Deseja excluir o usuario <strong>{deleteTarget?.name}</strong>? Esta acao nao pode ser desfeita.
+                Deseja excluir o usuário <strong>{deleteTarget?.name}</strong>? Esta ação não pode ser desfeita.
               </p>
               <div className="mt-4 flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setDeleteTarget(null)} className={secondaryButtonClass} disabled={deleting}>
@@ -648,7 +651,7 @@ export function UsersPage() {
                   disabled={deleting}
                   className="h-9 rounded-xl bg-rose-600 px-4 text-xs font-semibold text-white hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {deleting ? 'Excluindo...' : 'Confirmar exclusao'}
+                  {deleting ? 'Excluindo...' : 'Confirmar exclusão'}
                 </button>
               </div>
             </Modal>
@@ -658,6 +661,8 @@ export function UsersPage() {
     </AppShell>
   )
 }
+
+
 
 
 

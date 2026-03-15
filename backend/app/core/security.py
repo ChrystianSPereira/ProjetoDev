@@ -1,4 +1,4 @@
-"""Password hashing and JWT token utilities."""
+﻿"""Password hashing and JWT token utilities."""
 
 from datetime import UTC, datetime, timedelta
 
@@ -34,3 +34,4 @@ def decode_access_token(token: str) -> dict:
         return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
     except JWTError as exc:
         raise ValueError("Token invalido ou expirado.") from exc
+

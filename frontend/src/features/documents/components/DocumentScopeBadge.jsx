@@ -1,4 +1,4 @@
-function scopeClass(scope, isDark) {
+﻿function scopeClass(scope, isDark) {
   if (scope === 'CORPORATE') {
     return isDark
       ? 'border-cyan-500/40 bg-cyan-500/15 text-cyan-300'
@@ -17,3 +17,4 @@ export function DocumentScopeBadge({ scope, isDark }) {
     </span>
   )
 }
+

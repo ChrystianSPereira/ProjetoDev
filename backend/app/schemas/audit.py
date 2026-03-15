@@ -1,4 +1,4 @@
-"""Schemas for audit trail listing endpoints."""
+﻿"""Schemas for audit trail listing endpoints."""
 
 from datetime import datetime
 
@@ -31,3 +31,4 @@ class AuditLogListResponse(BaseModel):
     total: int
     skip: int
     limit: int
+

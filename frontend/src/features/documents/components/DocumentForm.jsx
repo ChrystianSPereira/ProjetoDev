@@ -1,9 +1,9 @@
-import { useId, useMemo, useRef, useState } from 'react'
+﻿import { useId, useMemo, useRef, useState } from 'react'
 
 function validate(values) {
   const errors = {}
 
-  if (!values.title.trim()) errors.title = 'Titulo obrigatorio.'
+  if (!values.title.trim()) errors.title = 'Titulo obrigatório.'
   if (!values.documentTypeId) errors.documentTypeId = 'Selecione o tipo documental.'
   if (!values.expirationDate) errors.expirationDate = 'Informe a data de vencimento.'
   if (!values.fileName.trim()) errors.fileName = 'Selecione um arquivo para upload.'
@@ -267,9 +267,10 @@ export function DocumentForm({
           disabled={disabled}
           className="h-10 rounded-xl bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Salvar e submeter para revisao
+          Salvar e submeter para revisão
         </button>
       </div>
     </form>
   )
 }
+

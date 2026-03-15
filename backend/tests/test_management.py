@@ -1,4 +1,4 @@
-from fastapi.testclient import TestClient
+﻿from fastapi.testclient import TestClient
 
 from conftest import login_headers
 
@@ -37,7 +37,7 @@ def test_management_non_admin_cannot_create_sector(
     )
 
     assert response.status_code == 403
-    assert response.json()["message"] == "Somente administrador pode realizar esta acao."
+    assert response.json()["message"] == "Somente administrador pode realizar esta ação."
 
 
 def test_management_admin_can_create_user_in_any_sector(
@@ -92,7 +92,7 @@ def test_management_list_users_admin_scope_only(
 
     coord_response = client.get("/users", headers=coord_headers)
     assert coord_response.status_code == 403
-    assert coord_response.json()["message"] == "Somente administrador pode realizar esta acao."
+    assert coord_response.json()["message"] == "Somente administrador pode realizar esta ação."
 
 
 def test_management_admin_can_update_user_sector(

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   --font-sans: "Manrope", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
@@ -147,3 +147,4 @@
   --scroll-thumb-hover: rgba(125, 211, 252, 0.94);
   --scroll-thumb-outline: rgba(2, 6, 23, 0.45);
 }
+

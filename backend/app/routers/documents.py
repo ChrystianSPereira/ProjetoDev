@@ -1,4 +1,4 @@
-"""Document business routes with lifecycle, permissions, and audit logging."""
+﻿"""Document business routes with lifecycle, permissions, and audit logging."""
 
 from datetime import UTC, datetime
 
@@ -39,7 +39,7 @@ def _require_roles(user: User, *roles: UserRole) -> None:
     if user.role not in roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Perfil sem permissao para esta acao.",
+            detail="Perfil sem permissão para esta ação.",
         )
 
 
@@ -124,10 +124,10 @@ def _audit_description(audit: AuditLog) -> str:
     if audit.event_type == AuditEventType.CREATED:
         return "Rascunho criado."
     if audit.event_type == AuditEventType.APPROVED:
-        return "Versao aprovada e publicada como Vigente."
+        return "Versão aprovada e publicada como Vigente."
     if audit.event_type == AuditEventType.REJECTED:
         reason = (audit.payload or {}).get("reason") if isinstance(audit.payload, dict) else None
-        return f"Versao reprovada. Motivo: {reason}" if reason else "Versao reprovada."
+        return f"Versão reprovada. Motivo: {reason}" if reason else "Versão reprovada."
     if audit.event_type == AuditEventType.STATUS_CHANGED:
         return f"Status alterado de {audit.previous_status} para {audit.new_status}."
     return "Evento registrado."
@@ -150,16 +150,16 @@ def create_draft(
     if not target_sector_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Operacao nao disponivel no momento.",
+            detail="Operação não disponivel no momento.",
         )
 
     sector_exists = db.query(Sector.id).filter(Sector.id == target_sector_id).first()
     if not sector_exists:
-        raise HTTPException(status_code=404, detail="Setor nao encontrado.")
+        raise HTTPException(status_code=404, detail="Setor não encontrado.")
 
     dtype_exists = db.query(DocumentType.id).filter(DocumentType.id == payload.document_type_id).first()
     if not dtype_exists:
-        raise HTTPException(status_code=404, detail="Tipo documental nao encontrado.")
+        raise HTTPException(status_code=404, detail="Tipo documental não encontrado.")
 
     code_input = (payload.code or "").strip() or None
 
@@ -244,7 +244,7 @@ def list_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> DocumentListResponse:
-    """Return one representative version per visible document with pagination and filters."""
+    """Return one representative version per visible document with págination and filters."""
     query = db.query(Document).options(
         joinedload(Document.sector),
         joinedload(Document.document_type),
@@ -388,7 +388,7 @@ def submit_for_review(
 
     version = db.query(DocumentVersion).filter(DocumentVersion.id == version_id).first()
     if not version:
-        raise HTTPException(status_code=404, detail="Versao nao encontrada.")
+        raise HTTPException(status_code=404, detail="Versão não encontrada.")
 
     if current_user.role != UserRole.ADMINISTRADOR and version.created_by_user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Somente o autor pode submeter.")
@@ -431,7 +431,7 @@ def approve_version(
         .first()
     )
     if not version:
-        raise HTTPException(status_code=404, detail="Versao nao encontrada.")
+        raise HTTPException(status_code=404, detail="Versão não encontrada.")
 
     document = (
         db.query(Document)
@@ -440,16 +440,16 @@ def approve_version(
         .first()
     )
     if not document:
-        raise HTTPException(status_code=404, detail="Documento nao encontrado.")
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
     if current_user.role == UserRole.COORDENADOR and document.sector_id != current_user.sector_id:
         raise HTTPException(
             status_code=403,
-            detail="Coordenador so pode aprovar documentos do proprio setor.",
+            detail="Coordenador so pode aprovar documentos do próprio setor.",
         )
 
     if version.status != DocumentStatus.IN_REVIEW:
-        raise HTTPException(status_code=409, detail="Versao precisa estar em revisao.")
+        raise HTTPException(status_code=409, detail="Versão precisa estar em revisão.")
 
     previous = version.status
 
@@ -501,7 +501,7 @@ def approve_version(
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Conflito ao promover versao vigente.",
+            detail="Conflito ao promover versão vigente.",
         ) from exc
 
     db.refresh(version)
@@ -520,20 +520,20 @@ def reject_version(
 
     version = db.query(DocumentVersion).filter(DocumentVersion.id == version_id).first()
     if not version:
-        raise HTTPException(status_code=404, detail="Versao nao encontrada.")
+        raise HTTPException(status_code=404, detail="Versão não encontrada.")
 
     document = db.query(Document).filter(Document.id == version.document_id).first()
     if not document:
-        raise HTTPException(status_code=404, detail="Documento nao encontrado.")
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
     if current_user.role == UserRole.COORDENADOR and document.sector_id != current_user.sector_id:
         raise HTTPException(
             status_code=403,
-            detail="Coordenador so pode rejeitar documentos do proprio setor.",
+            detail="Coordenador so pode rejeitar documentos do próprio setor.",
         )
 
     if version.status != DocumentStatus.IN_REVIEW:
-        raise HTTPException(status_code=409, detail="Versao precisa estar em revisao.")
+        raise HTTPException(status_code=409, detail="Versão precisa estar em revisão.")
 
     previous = version.status
     version.status = DocumentStatus.DRAFT
@@ -641,7 +641,7 @@ def get_document_detail(
     )
 
     if not document:
-        raise HTTPException(status_code=404, detail="Documento nao encontrado.")
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
     if not _document_is_visible(document, current_user):
         raise HTTPException(status_code=403, detail="Sem acesso ao documento local de outro setor.")
@@ -693,7 +693,7 @@ def get_document_detail(
                 previous_status=audit.previous_status,
                 new_status=audit.new_status,
                 actor_user_id=audit.actor_user_id,
-                actor_user_name=actor.name if actor else f"Usuario {audit.actor_user_id}",
+                actor_user_name=actor.name if actor else f"Usuário {audit.actor_user_id}",
                 occurred_at=audit.occurred_at,
                 description=_audit_description(audit),
                 payload=audit.payload,
@@ -731,7 +731,7 @@ def list_document_versions(
     """List versions respecting visibility; readers only receive ACTIVE version."""
     document = db.query(Document).filter(Document.id == document_id).first()
     if not document:
-        raise HTTPException(status_code=404, detail="Documento nao encontrado.")
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
 
     if document.scope == DocumentScope.LOCAL and document.sector_id != current_user.sector_id:
         raise HTTPException(status_code=403, detail="Sem acesso ao documento local de outro setor.")
@@ -746,3 +746,4 @@ def list_document_versions(
         )
 
     return base_query.order_by(DocumentVersion.version_number.desc()).all()
+

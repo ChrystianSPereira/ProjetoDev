@@ -54,3 +54,4 @@ class DocumentVersion(Base):
     document = relationship("Document", back_populates="versions")
     created_by = relationship("User", foreign_keys=[created_by_user_id])
     approved_by = relationship("User", foreign_keys=[approved_by_user_id])
+
