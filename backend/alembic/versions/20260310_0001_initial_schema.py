@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     user_role_enum = postgresql.ENUM(
-        "AUTHOR", "COORDINATOR", "READER", name="user_role", create_type=False
+        "AUTHOR", "COORDENADOR", "READER", name="user_role", create_type=False
     )
     document_scope_enum = postgresql.ENUM(
         "CORPORATE", "LOCAL", name="document_scope", create_type=False
